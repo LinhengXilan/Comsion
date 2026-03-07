@@ -7,15 +7,20 @@
 
 class Dialog : public QDialog
 {
+	Q_OBJECT
 public:
 	Dialog(QWidget* parent = nullptr);
-	~Dialog();
-
-	void SetImage(const Image& image);
+	~Dialog() override;
 
 private:
-	QImage* m_Image;
+	void SetImage(const Image& image);
+
+private slots:
+	void FileSelectionButtonClicked();
+
+private:
 	QLabel* m_Label;
+	QPushButton* m_FileSelectionButton;
 };
 
 #endif

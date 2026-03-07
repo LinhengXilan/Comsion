@@ -2,14 +2,20 @@
 
 Dialog::Dialog(QWidget* parent)
 {
-	Image image{"Assets/25mmS/MER-132-43GM(192.168.1.163[00-21-49-00-6E-9C])_2021-09-24_18_13_56_644-0.jpg"};
+	QVBoxLayout* layout = new QVBoxLayout;
 
-	m_Image = new QImage(image.GetImage().data, image.GetWidth(), image.GetHeight(), image.GetStride(), QImage::Format_BGR888);
+	m_FileSelectionButton = new QPushButton;
+	m_FileSelectionButton->setText("选择文件");
+	layout->addWidget(m_FileSelectionButton);
+
 	m_Label = new QLabel;
-	m_Label->setPixmap(QPixmap::fromImage(m_Image->scaled(m_Label->size(), Qt::KeepAspectRatio)));
-	QVBoxLayout* layout{new QVBoxLayout};
+	m_Label->setFixedWidth(1292);
+	m_Label->setFixedHeight(964);
 	layout->addWidget(m_Label);
+
 	setLayout(layout);
+
+	connect(m_FileSelectionButton, SIGNAL(clicked()), this, SLOT(FileSelectionButtonClicked()));
 }
 
 Dialog::~Dialog()
@@ -19,5 +25,24 @@ Dialog::~Dialog()
 
 void Dialog::SetImage(const Image& image)
 {
-	m_Image->loadFromData(image.GetImage().data, image.GetSize());
+	int width = image.GetWidth();
+	int height = image.GetHeight();
+	QImage qImage{image.GetImage().data, width, height, QImage::Format_BGR888};
+	m_Label->setPixmap(QPixmap::fromImage(qImage));
+}
+
+void Dialog::FileSelectionButtonClicked()
+{
+	QString filePath = QFileDialog::getOpenFileName(
+		nullptr,
+		"选择文件",
+		".",
+		"位图文件 (*.bmp *.jpg)"
+	);
+	if (filePath.isEmpty())
+	{
+		return;
+	}
+	Image image{filePath.toStdString()};
+	SetImage(image);
 }
