@@ -12,15 +12,24 @@ public:
 	Dialog(QWidget* parent = nullptr);
 	~Dialog() override;
 
+public:
+	void SetImage(const Image& image, QImage::Format format = QImage::Format_BGR888);
+
 private:
-	void SetImage(const Image& image);
+	void SetImage(QLabel& label, const Image& image, QImage::Format format = QImage::Format_BGR888);
 
 private slots:
 	void FileSelectionButtonClicked();
+	void RunButtonButtonClicked();
 
 private:
-	QLabel* m_Label;
+	QLabel* m_LabelLeft;
+	QLabel* m_LabelRight;
 	QPushButton* m_FileSelectionButton;
+	QPushButton* m_RunButton;
+	float m_AspectRatio = 0.5;
+
+	Image m_Image;
 };
 
 #endif

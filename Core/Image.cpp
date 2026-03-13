@@ -1,18 +1,26 @@
 #include <Core/Image.h>
 
-Image::Image(const std::string& filePath)
+Image::Image()
+	: m_Name("")
 {
-	m_Name = filePath.substr(filePath.find_last_of('/') + 1);
-	m_Image = cv::imread(filePath);
-	if (m_Image.empty())
-	{
-		std::cerr << "Failed to load image from: " << filePath << std::endl;
-	}
+	m_Image = CreateObjectRef<cv::Mat>();
+}
+
+Image::Image(const Image& image)
+	: m_Name(image.m_Name)
+{
+	m_Image = CreateObjectRef<cv::Mat>();
+	*m_Image = *image;
 }
 
 [[nodiscard]] cv::Mat Image::GetImage() const
 {
-	return m_Image;
+	return *m_Image;
+}
+
+[[nodiscard]] cv::Mat* Image::GetImagePointer() const
+{
+	return m_Image.get();
 }
 
 [[nodiscard]] std::string Image::GetName() const
@@ -22,27 +30,32 @@ Image::Image(const std::string& filePath)
 
 [[nodiscard]] int32_t Image::GetSize() const
 {
-	return m_Image.cols * m_Image.rows * m_Image.channels();
+	return m_Image->cols * m_Image->rows * m_Image->channels();
 }
 
 [[nodiscard]] int32_t Image::GetWidth() const
 {
-	return m_Image.cols;
+	return m_Image->cols;
 }
 
 [[nodiscard]] int32_t Image::GetHeight() const
 {
-	return m_Image.rows;
+	return m_Image->rows;
 }
 
 [[nodiscard]] int32_t Image::GetStride() const
 {
-	return m_Image.cols * m_Image.channels();
+	return m_Image->cols * m_Image->channels();
 }
 
-void Image::CopyImage(const cv::Mat& image)
+void Image::SetImage(const cv::Mat& image)
 {
-	image.copyTo(m_Image);
+	*m_Image = image;
+}
+
+void Image::SetImage(const Image& image)
+{
+	*m_Image = *image;
 }
 
 void Image::SetName(const std::string& name)
@@ -52,15 +65,25 @@ void Image::SetName(const std::string& name)
 
 Image& Image::operator=(const Image& image)
 {
-	m_Image.release();
-	image.m_Image.copyTo(this->m_Image);
+	m_Image->release();
+	image.m_Image->copyTo(*m_Image);
 	return *this;
+}
+
+cv::Mat& Image::operator*()
+{
+	return *m_Image;
+}
+
+const cv::Mat& Image::operator*() const
+{
+	return *m_Image;
 }
 
 void Image::LoadImage(const std::string& filepath)
 {
-	m_Image = cv::imread(filepath);
-	if (m_Image.empty())
+	*m_Image = cv::imread(filepath, cv::IMREAD_COLOR_BGR);
+	if (m_Image->empty())
 	{
 		std::cerr << "Failed to load image from: " << filepath << std::endl;
 		return;
@@ -72,19 +95,7 @@ void Image::LoadImage(const std::string& filepath)
 	}
 }
 
-void Image::ShowImage()
-{
-	if (m_Image.empty() || m_Name.empty()) return;
-	cv::imshow(m_Name, m_Image);
-}
-
-void Image::ShowImage(const std::string& windowName)
-{
-	if (m_Image.empty()) return;
-	cv::imshow(windowName, m_Image);
-}
-
-void Image::CopyTo(Image& image)
+void Image::CopyTo(Image& image) const
 {
 	image = *this;
 }

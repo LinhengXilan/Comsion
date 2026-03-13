@@ -1,33 +1,41 @@
 #ifndef CORE_IMAGE_H
 #define CORE_IMAGE_H
 
+#include <Core/Type.h>
+
 class Image
 {
 public:
-	Image() = default;
-	explicit Image(const std::string& filePath);
+	Image();
+	Image(const Image& image);
 	~Image() = default;
 
+public:
 	[[nodiscard]] cv::Mat GetImage() const;
+	[[nodiscard]] cv::Mat* GetImagePointer() const;
 	[[nodiscard]] std::string GetName() const;
 	[[nodiscard]] int32_t GetSize() const;
 	[[nodiscard]] int32_t GetWidth() const;
 	[[nodiscard]] int32_t GetHeight() const;
 	[[nodiscard]] int32_t GetStride() const;
 
-	void CopyImage(const cv::Mat& image);
+public:
+	void SetImage(const cv::Mat& image);
+	void SetImage(const Image& image);
 	void SetName(const std::string& name);
 
+public:
 	Image& operator=(const Image& image);
+	cv::Mat& operator*();
+	const cv::Mat& operator*() const;
 
+public:
 	void LoadImage(const std::string& filepath);
-	void ShowImage();
-	void ShowImage(const std::string& windowName);
-	void CopyTo(Image& image);
+	void CopyTo(Image& image) const;
 
 private:
-	cv::Mat m_Image;
 	std::string m_Name;
+	ObjectRef<cv::Mat> m_Image;
 };
 
 #endif

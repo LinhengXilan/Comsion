@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
 
 #include <opencv2/opencv.hpp>
 
