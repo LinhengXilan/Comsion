@@ -1,5 +1,5 @@
 #include <QtWidgets/QApplication>
-#include <../Window/Dialog.h>
+#include <Window/Dialog.h>
 
 int main(int argc, char* argv[])
 {

@@ -4,6 +4,8 @@
 #include <string>
 #include <cstdint>
 #include <memory>
+#include <vector>
+#include <utility>
 
 #include <opencv2/opencv.hpp>
 

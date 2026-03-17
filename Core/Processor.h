@@ -15,7 +15,9 @@ public:
 	[[nodiscard]] Image GetOriginalImage() const;
 
 public:
-	Image Process();
+	Image& Process();
+	Image& Contours();
+	std::pair<Image, Image> Rect();
 
 private:
 	void Convert(Image& image, cv::ColorConversionCodes type);
@@ -50,8 +52,9 @@ private:
 	void EqualizeHist(Image& image);
 	void ConvertScaleAbs(Image& image, double alpha = 1.0f, double beta = 0.0f);
 
+
 private:
-	Image m_OriginalImage;
+	Image m_Image;
 };
 
 #endif

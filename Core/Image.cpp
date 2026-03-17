@@ -13,6 +13,12 @@ Image::Image(const Image& image)
 	*m_Image = *image;
 }
 
+Image::Image(const cv::Mat& image)
+	: m_Name("")
+{
+	m_Image = CreateObjectRef<cv::Mat>(image);
+}
+
 [[nodiscard]] cv::Mat Image::GetImage() const
 {
 	return *m_Image;

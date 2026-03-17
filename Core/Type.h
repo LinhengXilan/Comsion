@@ -1,7 +1,7 @@
 #ifndef CORE_TYPE_H
 #define CORE_TYPE_H
 
-#include <pch.h>
+#include <Core/pch.h>
 
 template<typename T>
 using ObjectRef = std::shared_ptr<T>;

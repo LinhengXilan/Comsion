@@ -8,6 +8,7 @@ class Image
 public:
 	Image();
 	Image(const Image& image);
+	Image(const cv::Mat& image);
 	~Image() = default;
 
 public:

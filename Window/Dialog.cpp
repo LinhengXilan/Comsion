@@ -90,5 +90,5 @@ void Dialog::FileSelectionButtonClicked()
 void Dialog::RunButtonButtonClicked()
 {
 	Processor processor{m_Image};
-	SetImage(*m_LabelRight, processor.Process(), QImage::Format_Grayscale8);
+	SetImage(*m_LabelRight, processor.Rect().second, QImage::Format_BGR888);
 }
