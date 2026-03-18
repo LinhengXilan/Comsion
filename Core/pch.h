@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 #include <opencv2/opencv.hpp>
 

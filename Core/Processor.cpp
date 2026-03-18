@@ -20,9 +20,11 @@ Image& Processor::Process()
 	/* 边缘检测 */
 	// EqualizeHist();
 	// Filter({ 3,3 }, 5);
+	// EdgeDetection(EdgeDetectionMethod::Canny, 80, 180);
+
+	// 模板匹配
 	// MatchTemplate("Assets/1t.bmp");
 	// ConvertScaleAbs(0.8f, 0.0f);
-	// EdgeDetection(EdgeDetectionMethod::Canny, 80, 180);
 	return m_Image;
 }
 
@@ -64,7 +66,7 @@ void Processor::PixelHistogram(Image& image, bool isDrawHist)
 			-1
 		);
 	}
-	cv::imshow(m_Image.GetName() + " | Pixel Histogram", histImage);
+	// cv::imshow(m_Image.GetName() + " | Pixel Histogram", histImage);
 }
 
 void Processor::DrawRectangle(Image& image, const cv::Point& pointLU, const cv::Point& pointRD, const Color::RGB& color, int32_t thickness)
@@ -174,7 +176,22 @@ std::pair<Image, Image> Processor::Rect()
 	// 外接矩形
 	std::vector<std::vector<cv::Point>> contours;
 	std::vector<cv::Vec4i> hierarchy;
+	std::vector<cv::Point2f> centers;
 	cv::findContours(cannyImg, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point{});
+	std::cout << "contours.size(): " << contours.size() << std::endl;
+	// TODO: 去除无用轮廓
+	for (int i = 0; i < contours.size(); ++i)
+	{
+		double area = cv::contourArea(contours[i]);
+		if (area < 200 || area > 5500)
+		{
+			contours.erase(contours.begin() + i);
+			--i;
+		}
+	}
+	std::cout << "contours.size(): " << contours.size() << std::endl;
+	// TODO: END
+
 	for (int i = 0; i < contours.size(); ++i)
 	{
 		// 绘制矩形
@@ -186,18 +203,39 @@ std::pair<Image, Image> Processor::Rect()
 		cv::Point2f points[4];
 		rotatedRect.points(points);
 		cv::Point2f center{rotatedRect.center};
-		for (int i = 0; i < 4; ++i)
+		centers.push_back(center);
+		for (int j = 0; j < 4; ++j)
 		{
-			if (i == 3)
+			if (j == 3)
 			{
-				cv::line(img2, points[i], points[0], cv::Scalar{0, 0, 255}, 2);
+				cv::line(img2, points[j], points[0], cv::Scalar{0, 0, 255}, 2);
 				break;
 			}
-			cv::line(img2, points[i], points[i + 1], cv::Scalar{0, 0, 255}, 2);
+			cv::line(img2, points[j], points[j + 1], cv::Scalar{0, 0, 255}, 2);
 		}
 		cv::circle(img2, center, 4, cv::Scalar{0, 0, 255}, -1);
-
+		//std::cout << center << std::endl;
 	}
 
+	cv::Vec4f line;
+	cv::fitLine(centers, line, cv::DIST_L1, 0, 0.01, 0.01);
+
+	std::cout << line << std::endl;
+
+	double k = line[1] / line[0];
+	cv::Point2d point1{line[2], line[3]};
+	cv::Point2d point2{line[2], line[3]};
+	while (point1.x <= 1292 || point1.y <= 964)
+	{
+		point1.x += line[0];
+		point1.y += line[1];
+
+	}
+	while (point2.x >= 0 || point2.y >= 0)
+	{
+		point2.x -= line[0];
+		point2.y -= line[1];
+	}
+	cv::line(img2, point1, point2, cv::Scalar{0, 255, 0}, 2);
 	return {img1, img2};
 }

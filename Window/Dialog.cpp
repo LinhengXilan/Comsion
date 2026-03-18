@@ -2,6 +2,7 @@
 #include <Core/Processor.h>
 
 Dialog::Dialog(QWidget* parent)
+	: Is_Run{false}
 {
 	QVBoxLayout* layout = new QVBoxLayout;
 
@@ -85,10 +86,13 @@ void Dialog::FileSelectionButtonClicked()
 	}
 	m_Image.LoadImage(filePath.toStdString());
 	SetImage(*m_LabelLeft, m_Image);
+	Is_Run = false;
 }
 
 void Dialog::RunButtonButtonClicked()
 {
+	if (Is_Run) return;
+	Is_Run = true;
 	Processor processor{m_Image};
 	SetImage(*m_LabelRight, processor.Rect().second, QImage::Format_BGR888);
 }

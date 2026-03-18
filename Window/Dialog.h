@@ -30,6 +30,7 @@ private:
 	float m_AspectRatio = 0.5;
 
 	Image m_Image;
+	bool Is_Run;
 };
 
 #endif

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.2)
 project(Comsion)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 # 设置输出路径
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_SOURCE_DIR}/bin/Debug")

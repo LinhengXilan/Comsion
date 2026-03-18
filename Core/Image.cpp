@@ -51,7 +51,7 @@ Image::Image(const cv::Mat& image)
 
 [[nodiscard]] int32_t Image::GetStride() const
 {
-	return m_Image->cols * m_Image->channels();
+	return m_Image->step;
 }
 
 void Image::SetImage(const cv::Mat& image)
