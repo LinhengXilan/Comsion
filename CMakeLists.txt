@@ -43,8 +43,8 @@ target_link_libraries(Comsion PRIVATE
 	libQt6Widgets.so
 	libQt6Gui.so
 )
-if(CMAKE_BUILD_TYPE EQUAL Debug)
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	target_compile_definitions(Comsion PRIVATE
-		DEBUG
+		COMSION_DEBUG
 	)
 endif()

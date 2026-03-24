@@ -2,22 +2,37 @@
 #include <Core/Processor.h>
 
 Dialog::Dialog(QWidget* parent)
-	: Is_Run{false}
 {
-	QVBoxLayout* layout = new QVBoxLayout;
+	QHBoxLayout* layout = new QHBoxLayout;
 
-	// 按钮
-	QHBoxLayout* buttonLayout = new QHBoxLayout;
+	// 控制
+	QVBoxLayout* controlLayout = new QVBoxLayout;
 	m_FileSelectionButton = new QPushButton;
 	m_FileSelectionButton->setText("选择文件");
-	buttonLayout->addWidget(m_FileSelectionButton);
+	controlLayout->addWidget(m_FileSelectionButton);
 	connect(m_FileSelectionButton, SIGNAL(clicked()), this, SLOT(FileSelectionButtonClicked()));
 
 	m_RunButton = new QPushButton;
 	m_RunButton->setText("运行");
-	buttonLayout->addWidget(m_RunButton);
+	controlLayout->addWidget(m_RunButton);
 	connect(m_RunButton, SIGNAL(clicked()), this, SLOT(RunButtonButtonClicked()));
-	layout->addLayout(buttonLayout);
+
+	m_SelectModeComboBox = new QComboBox;
+	controlLayout->addWidget(m_SelectModeComboBox);
+
+	m_SelectTemplateButton = new QPushButton;
+	m_SelectTemplateButton->setText("选择模板");
+	m_SelectTemplateButton->setEnabled(false);
+	controlLayout->addWidget(m_SelectTemplateButton);
+	connect(m_SelectTemplateButton, SIGNAL(clicked()), this, SLOT(SelectTemplateButtonClicked()));
+
+	m_SelectROIButton = new QPushButton;
+	m_SelectROIButton->setText("选择ROI区域");
+	// m_SelectROIButton->setEnabled(false);
+	controlLayout->addWidget(m_SelectROIButton);
+	connect(m_SelectROIButton, SIGNAL(clicked()), this, SLOT(SelectROIButtonClicked()));
+
+	layout->addLayout(controlLayout);
 
 	// 图像显示
 	QHBoxLayout* imageLayout = new QHBoxLayout;
@@ -25,6 +40,7 @@ Dialog::Dialog(QWidget* parent)
 	m_LabelLeft = new QLabel;
 	m_LabelLeft->setFixedWidth(1292 / 2);
 	m_LabelLeft->setFixedHeight(964 / 2);
+	m_LabelLeft->installEventFilter(this);
 	imageLayout->addWidget(m_LabelLeft);
 
 	imageLayout->addStretch(10);
@@ -32,6 +48,7 @@ Dialog::Dialog(QWidget* parent)
 	m_LabelRight = new QLabel;
 	m_LabelRight->setFixedWidth(1292 / 2);
 	m_LabelRight->setFixedHeight(964 / 2);
+	m_LabelRight->installEventFilter(this);
 	imageLayout->addWidget(m_LabelRight);
 
 	layout->addLayout(imageLayout);
@@ -39,30 +56,121 @@ Dialog::Dialog(QWidget* parent)
 	setLayout(layout);
 }
 
-Dialog::~Dialog()
+void Dialog::FileSelectionButtonClicked()
 {
-
-}
-
-void Dialog::SetImage(const Image& image, QImage::Format format)
-{
-	SetImage(*m_LabelRight, image, format);
-}
-
-void Dialog::SetImage(QLabel& label, const Image& image, QImage::Format format)
-{
-	int width = image.GetWidth();
-	int height = image.GetHeight();
-#ifdef DEBUG
-	QMessageBox::information(
-		this,
-		"Image Info",
-		"Width: " + QString::number(width) + "Height: " + QString::number(height),
-		QMessageBox::Ok
+	m_ImagePath = QFileDialog::getOpenFileName(
+		nullptr,
+		"选择文件",
+		".",
+		"位图文件 (*.bmp *.jpg)"
 	);
-#endif
-	QImage qImage{image.GetImage().data, width, height, format};
-	label.setPixmap(
+	if (m_ImagePath.isEmpty())
+	{
+		QMessageBox::warning(this, "错误", "文件打开失败", QMessageBox::Ok);
+	}
+	m_Image.LoadImage(m_ImagePath.toStdString());
+	m_ImageRect[0] = 0;
+	m_ImageRect[1] = 0;
+	m_ImageRect[2] = m_Image.GetWidth();
+	m_ImageRect[3] = m_Image.GetHeight();
+	is_Run = false;
+	this->update();
+}
+
+void Dialog::RunButtonButtonClicked()
+{
+	Processor processor{m_Image};
+	m_Image = processor.Rect(m_ImageRect);
+	is_Run = true;
+	this->update();
+}
+
+void Dialog::SelectTemplateButtonClicked()
+{
+
+}
+
+void Dialog::SelectROIButtonClicked()
+{
+	is_SelectMode = true;
+}
+
+void Dialog::OnPaint()
+{
+	QPainter painter{this->m_LabelLeft};
+	QPen pen;
+	QPixmap pixmap{m_ImagePath};
+	pen.setColor(Qt::red);
+	painter.setPen(pen);
+
+	painter.drawPixmap(0, 0, pixmap.width() * m_AspectRatio, pixmap.height() * m_AspectRatio, QPixmap{m_ImagePath});
+	painter.drawRect(
+		m_ImageRect[0],
+		m_ImageRect[1],
+		m_ImageRect[2] - m_ImageRect[0],
+		m_ImageRect[3] - m_ImageRect[1]
+	);
+	for (auto& i : m_ImageRect)
+	{
+		std::cout << i << ' ';
+	}
+	std::cout << std::endl;
+}
+
+void Dialog::mousePressEvent(QMouseEvent* event)
+{
+	if (event->button() == Qt::LeftButton && is_SelectMode)
+	{
+		is_MousePressed = true;
+		m_ImageRect[0] = event->pos().x() - m_LabelLeft->pos().x();
+		m_ImageRect[1] = event->pos().y();
+		m_ImageRect[2] = 0;
+		m_ImageRect[3] = 0;
+	}
+	this->update();
+}
+
+void Dialog::mouseMoveEvent(QMouseEvent* event)
+{
+	if (is_MousePressed && is_SelectMode)
+	{
+		m_ImageRect[2] = event->pos().x() - m_LabelLeft->pos().x();
+		m_ImageRect[3] = event->pos().y();
+	}
+	this->update();
+}
+
+void Dialog::mouseReleaseEvent(QMouseEvent* event)
+{
+	if (event->button() == Qt::LeftButton && is_MousePressed)
+	{
+		is_MousePressed = false;
+		is_SelectMode = false;
+		m_ImageRect[2] = event->pos().x() - m_LabelLeft->pos().x();
+		m_ImageRect[3] = event->pos().y();
+	}
+	this->update();
+}
+
+bool Dialog::eventFilter(QObject* watched, QEvent* event)
+{
+	if (watched == this->m_LabelLeft && event->type() == QEvent::Paint)
+	{
+		OnPaint();
+	}
+	if (watched == this->m_LabelRight && event->type() == QEvent::Paint && is_Run)
+	{
+		OnOutPutPaint();
+	}
+	return QWidget::eventFilter(watched, event);
+}
+
+void Dialog::OnOutPutPaint()
+{
+	int width = m_Image.GetWidth();
+	int height = m_Image.GetHeight();
+	QImage qImage{m_Image.GetImage().data, width, height, QImage::Format_BGR888};
+	m_LabelRight->setPixmap(
 		QPixmap::fromImage(qImage).scaled(
 			width * m_AspectRatio,
 			height * m_AspectRatio,
@@ -70,29 +178,5 @@ void Dialog::SetImage(QLabel& label, const Image& image, QImage::Format format)
 			Qt::SmoothTransformation
 		)
 	);
-}
 
-void Dialog::FileSelectionButtonClicked()
-{
-	QString filePath = QFileDialog::getOpenFileName(
-		nullptr,
-		"选择文件",
-		".",
-		"位图文件 (*.bmp *.jpg)"
-	);
-	if (filePath.isEmpty())
-	{
-		QMessageBox::warning(this, "错误", "文件打开失败", QMessageBox::Ok);
-	}
-	m_Image.LoadImage(filePath.toStdString());
-	SetImage(*m_LabelLeft, m_Image);
-	Is_Run = false;
-}
-
-void Dialog::RunButtonButtonClicked()
-{
-	if (Is_Run) return;
-	Is_Run = true;
-	Processor processor{m_Image};
-	SetImage(*m_LabelRight, processor.Rect().second, QImage::Format_BGR888);
 }

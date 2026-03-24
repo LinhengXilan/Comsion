@@ -15,15 +15,15 @@ public:
 	[[nodiscard]] Image GetOriginalImage() const;
 
 public:
-	Image& Process();
-	Image& Contours();
-	std::pair<Image, Image> Rect();
+	// Image& Process();
+	// Image& Contours();
+	Image Rect(int ROI[4]);
 
 private:
-	void Convert(Image& image, cv::ColorConversionCodes type);
-	void PixelHistogram(Image& image, bool isDrawHist = true);
-	void DrawRectangle(Image& image, const cv::Point& pointLU, const cv::Point& pointRD, const Color::RGB& color, int32_t thickness = 200);
-	void DrawRectangle(Image& image, const cv::Point& point, const cv::Mat& mat, const Color::RGB& color, int32_t thickness = 200);
+	// void Convert(Image& image, cv::ColorConversionCodes type);
+	// void PixelHistogram(Image& image, bool isDrawHist = true);
+	// void DrawRectangle(Image& image, const cv::Point& pointLU, const cv::Point& pointRD, const Color::RGB& color, int32_t thickness = 200);
+	// void DrawRectangle(Image& image, const cv::Point& point, const cv::Mat& mat, const Color::RGB& color, int32_t thickness = 200);
 
 	/**
 	 * @param templateImage 模板图片
@@ -32,7 +32,7 @@ private:
 	 * @brief 模板匹配，并在处理后的图片上绘制匹配结果的矩形框。
 	 * @note 需要保证图像为彩色图像，否则绘制矩形框时会出现问题。
 	 */
-	void MatchTemplate(Image& image, const Image& templateImage, cv::TemplateMatchModes flag = cv::TM_CCOEFF_NORMED, const Color::RGB& color = { 0xFF, 0,0 });
+	// void MatchTemplate(Image& image, const Image& templateImage, cv::TemplateMatchModes flag = cv::TM_CCOEFF_NORMED, const Color::RGB& color = { 0xFF, 0,0 });
 	/**
 	 * @param filepath 模板图片文件路径
 	 * @param flag 模板匹配的方式
@@ -40,17 +40,17 @@ private:
 	 * @brief 模板匹配，并在处理后的图片上绘制匹配结果的矩形框。
 	 * @note 需要保证图像为彩色图像，否则绘制矩形框时会出现问题。
 	 */
-	void MatchTemplate(Image& image, const std::string& filepath, cv::TemplateMatchModes flag = cv::TM_CCOEFF_NORMED, const Color::RGB& color = { 0xFF, 0,0 });
-	void Filter(Image& image, const cv::Size& size, double sigma);
-	enum class EdgeDetectionMethod
-	{
-		Sobel,
-		Laplacian,
-		Canny
-	};
-	void EdgeDetection(Image& image, EdgeDetectionMethod method, int32_t arg0 = 1, int32_t arg1 = 1, int32_t arg3 = 1);
-	void EqualizeHist(Image& image);
-	void ConvertScaleAbs(Image& image, double alpha = 1.0f, double beta = 0.0f);
+	// void MatchTemplate(Image& image, const std::string& filepath, cv::TemplateMatchModes flag = cv::TM_CCOEFF_NORMED, const Color::RGB& color = { 0xFF, 0,0 });
+	// void Filter(Image& image, const cv::Size& size, double sigma);
+	// enum class EdgeDetectionMethod
+	// {
+	// 	Sobel,
+	// 	Laplacian,
+	// 	Canny
+	// };
+	// void EdgeDetection(Image& image, EdgeDetectionMethod method, int32_t arg0 = 1, int32_t arg1 = 1, int32_t arg3 = 1);
+	// void EqualizeHist(Image& image);
+	// void ConvertScaleAbs(Image& image, double alpha = 1.0f, double beta = 0.0f);
 
 
 private:
