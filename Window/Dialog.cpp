@@ -3,10 +3,35 @@
 
 Dialog::Dialog(QWidget* parent)
 {
-	QHBoxLayout* layout = new QHBoxLayout;
+	//
+	m_ImageRect[0] = 0;
+	m_ImageRect[1] = 0;
+	m_ImageRect[2] = 0;
+	m_ImageRect[3] = 0;
+
+	QVBoxLayout* layout = new QVBoxLayout;
+
+	// 图像显示
+	QHBoxLayout* imageLayout = new QHBoxLayout;
+
+	m_LabelLeft = new QLabel;
+	m_LabelLeft->setFixedWidth(1292 / 2);
+	m_LabelLeft->setFixedHeight(964 / 2);
+	m_LabelLeft->installEventFilter(this);
+	imageLayout->addWidget(m_LabelLeft);
+
+	imageLayout->addStretch(10);
+
+	m_LabelRight = new QLabel;
+	m_LabelRight->setFixedWidth(1292 / 2);
+	m_LabelRight->setFixedHeight(964 / 2);
+	m_LabelRight->installEventFilter(this);
+	imageLayout->addWidget(m_LabelRight);
+
+	layout->addLayout(imageLayout);
 
 	// 控制
-	QVBoxLayout* controlLayout = new QVBoxLayout;
+	QHBoxLayout* controlLayout = new QHBoxLayout;
 	m_FileSelectionButton = new QPushButton;
 	m_FileSelectionButton->setText("选择文件");
 	controlLayout->addWidget(m_FileSelectionButton);
@@ -34,24 +59,56 @@ Dialog::Dialog(QWidget* parent)
 
 	layout->addLayout(controlLayout);
 
-	// 图像显示
-	QHBoxLayout* imageLayout = new QHBoxLayout;
+	QHBoxLayout* paramLayout = new QHBoxLayout;
 
-	m_LabelLeft = new QLabel;
-	m_LabelLeft->setFixedWidth(1292 / 2);
-	m_LabelLeft->setFixedHeight(964 / 2);
-	m_LabelLeft->installEventFilter(this);
-	imageLayout->addWidget(m_LabelLeft);
+	// 膨胀系数
+	m_KernelParamText = new QLabel;
+	m_KernelParamText->setText("膨胀系数");
+	paramLayout->addWidget(m_KernelParamText);
 
-	imageLayout->addStretch(10);
+	m_KernelParam = new QSpinBox;
+	m_KernelParam->setFixedHeight(30);
+	paramLayout->addWidget(m_KernelParam);
+	paramLayout->addStretch(1);
 
-	m_LabelRight = new QLabel;
-	m_LabelRight->setFixedWidth(1292 / 2);
-	m_LabelRight->setFixedHeight(964 / 2);
-	m_LabelRight->installEventFilter(this);
-	imageLayout->addWidget(m_LabelRight);
+	// 筛选最小面积
+	m_AreaMinParamText = new QLabel;
+	m_AreaMinParamText->setText("最小面积");
+	paramLayout->addWidget(m_AreaMinParamText);
 
-	layout->addLayout(imageLayout);
+	m_AreaMinParam = new QSpinBox;
+	m_AreaMinParam->setFixedHeight(30);
+	paramLayout->addWidget(m_AreaMinParam);
+	paramLayout->addStretch(1);
+
+	// 筛选最大面积
+	m_AreaMaxParamText = new QLabel;
+	m_AreaMaxParamText->setText("最大面积");
+	paramLayout->addWidget(m_AreaMaxParamText);
+
+	m_AreaMaxParam = new QSpinBox;
+	m_AreaMaxParam->setFixedHeight(30);
+	paramLayout->addWidget(m_AreaMaxParam);
+
+	paramLayout->addStretch(10);
+
+	// 配置
+	m_ReadOptionButton = new QPushButton("读取配置");
+	connect(m_ReadOptionButton, SIGNAL(clicked()), this, SLOT(ReadOptionButtonClicked()));
+	paramLayout->addWidget(m_ReadOptionButton);
+
+	m_SaveOptionButton = new QPushButton("保存配置");
+	connect(m_SaveOptionButton, SIGNAL(clicked()), this, SLOT(SaveOptionButtonClicked()));
+	paramLayout->addWidget(m_SaveOptionButton);
+
+	layout->addLayout(paramLayout);
+
+	// 软件控制
+	QHBoxLayout* programControlLayout = new QHBoxLayout;
+
+	m_QuitButton = new QPushButton("退出");
+
+
 
 	setLayout(layout);
 }
@@ -62,7 +119,7 @@ void Dialog::FileSelectionButtonClicked()
 		nullptr,
 		"选择文件",
 		".",
-		"位图文件 (*.bmp *.jpg)"
+		"位图文件 (*.bmp *.jpg *.png)"
 	);
 	if (m_ImagePath.isEmpty())
 	{
@@ -71,15 +128,17 @@ void Dialog::FileSelectionButtonClicked()
 	m_Image.LoadImage(m_ImagePath.toStdString());
 	m_ImageRect[0] = 0;
 	m_ImageRect[1] = 0;
-	m_ImageRect[2] = m_Image.GetWidth();
-	m_ImageRect[3] = m_Image.GetHeight();
+	m_ImageRect[2] = m_Image.GetWidth() - 1;
+	m_ImageRect[3] = m_Image.GetHeight() - 1;
 	is_Run = false;
 	this->update();
 }
 
 void Dialog::RunButtonButtonClicked()
 {
-	Processor processor{m_Image};
+	Image image;
+	image.LoadImage(m_ImagePath.toStdString());
+	Processor processor{image};
 	m_Image = processor.Rect(m_ImageRect);
 	is_Run = true;
 	this->update();
@@ -100,7 +159,7 @@ void Dialog::OnPaint()
 	QPainter painter{this->m_LabelLeft};
 	QPen pen;
 	QPixmap pixmap{m_ImagePath};
-	pen.setColor(Qt::red);
+	pen.setColor(Qt::blue);
 	painter.setPen(pen);
 
 	painter.drawPixmap(0, 0, pixmap.width() * m_AspectRatio, pixmap.height() * m_AspectRatio, QPixmap{m_ImagePath});
@@ -110,11 +169,14 @@ void Dialog::OnPaint()
 		m_ImageRect[2] - m_ImageRect[0],
 		m_ImageRect[3] - m_ImageRect[1]
 	);
+
+#ifdef COMSION_DEBUG
 	for (auto& i : m_ImageRect)
 	{
 		std::cout << i << ' ';
 	}
 	std::cout << std::endl;
+#endif
 }
 
 void Dialog::mousePressEvent(QMouseEvent* event)
@@ -178,5 +240,26 @@ void Dialog::OnOutPutPaint()
 			Qt::SmoothTransformation
 		)
 	);
+}
+
+void Dialog::ReadOptionButtonClicked()
+{
+	QString filepath = QFileDialog::getOpenFileName(
+		nullptr,
+		"选择文件",
+		".",
+		"配置文件 (*.ini)"
+	);
+	m_Setting.Load(filepath.toStdString());
+	if (m_ImagePath.isEmpty())
+	{
+		QMessageBox::warning(this, "错误", "文件打开失败", QMessageBox::Ok);
+	}
+
+	is_Run = false;
+}
+
+void Dialog::SaveOptionButtonClicked()
+{
 
 }

@@ -164,42 +164,58 @@ Processor::Processor(const Image& image)
 Image Processor::Rect(int ROI[4])
 {
 	cv::Rect roi{ROI[0] * 2, ROI[1] * 2, (ROI[2] - ROI[0]) * 2, (ROI[3] - ROI[1]) * 2};
+
 #ifdef COMSION_DEBUG
 	std::cerr << "ROI: " << roi << std::endl;
 #endif
+
 	cv::Mat image{m_Image.GetImage()};
 	cv::Mat roiImage = image(roi);
 
 	cv::Mat cannyImg;
 	cv::Canny(roiImage, cannyImg, 80, 160, 3);
+
 #ifdef COMSION_DEBUG
 	cv::imshow("11", roiImage);
 	cv::imshow("", cannyImg);
 	cv::waitKey();
 #endif
+
 	// 图像膨胀
-	// cv::Mat kernelImg{cv::getStructuringElement(0, cv::Size{5, 5})};
-	// cv::dilate(cannyImg, cannyImg, kernelImg);
+	cv::Mat kernelImg{cv::getStructuringElement(0, cv::Size{9, 9})};
+	cv::dilate(cannyImg, cannyImg, kernelImg);
+
+#ifdef COMSION_DEBUG
+	cv::imshow("dilate", cannyImg);
+	cv::waitKey();
+#endif
 
 	// 外接矩形
 	std::vector<std::vector<cv::Point>> contours;
 	std::vector<cv::Vec4i> hierarchy;
 	std::vector<cv::Point2f> centers;
 	cv::findContours(cannyImg, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point{});
+
+#ifdef COMSION_DEBUG
 	std::cout << "contours.size(): " << contours.size() << std::endl;
+#endif
+
 	for (int i = 0; i < contours.size(); ++i)
 	{
 		double area = cv::contourArea(contours[i]);
-		if (area < 100 || area > 50000)
+		if (area < 200 || area > 40000)
 		{
 			contours.erase(contours.begin() + i);
 			--i;
 		}
 	}
+
+#ifdef COMSION_DEBUG
 	std::cout << "contours.size(): " << contours.size() << std::endl;
+#endif
 
 	// 画四条线
-	Image img2 = m_Image;;
+	Image img2 = m_Image;
 
 	for (int i = 0; i < contours.size(); ++i)
 	{
@@ -212,6 +228,8 @@ Image Processor::Rect(int ROI[4])
 			points[j].y += roi.y;
 		}
 		cv::Point2f center{rotatedRect.center};
+		center.x += roi.x;
+		center.y += roi.y;
 		centers.push_back(center);
 		for (int j = 0; j < 4; ++j)
 		{
@@ -228,11 +246,13 @@ Image Processor::Rect(int ROI[4])
 	cv::Vec4f line;
 	cv::fitLine(centers, line, cv::DIST_L1, 0, 0.01, 0.01);
 
+#ifdef COMSION_DEBUG
 	std::cout << line << std::endl;
+#endif
 
 	double k = line[1] / line[0];
-	cv::Point2d point1{line[2] + roi.x, line[3] + roi.y};
-	cv::Point2d point2{line[2] + roi.x, line[3] + roi.y};
+	cv::Point2d point1{line[2], line[3]};
+	cv::Point2d point2{line[2], line[3]};
 	while (point1.x <= 1292 || point1.y <= 964)
 	{
 		point1.x += line[0];

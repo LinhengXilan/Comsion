@@ -5,6 +5,7 @@
 
 template<typename T>
 using ObjectRef = std::shared_ptr<T>;
+
 template<typename T, typename... Args>
 constexpr ObjectRef<T> CreateObjectRef(Args&&... args)
 {

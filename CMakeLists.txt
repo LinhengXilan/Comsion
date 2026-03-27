@@ -25,6 +25,7 @@ add_executable(Comsion
 	Core/Image.cpp
 	Core/Processor.cpp
 	Window/Dialog.cpp
+	Core/Setting.cpp
 )
 # 项目1：主程序.编译
 target_include_directories(Comsion PRIVATE ${CMAKE_SOURCE_DIR})
