@@ -20,6 +20,8 @@ public:
 	[[nodiscard]] int32_t GetHeight() const;
 	[[nodiscard]] int32_t GetStride() const;
 
+	bool Is_Empty() const;
+
 public:
 	void SetImage(const cv::Mat& image);
 	void SetImage(const Image& image);

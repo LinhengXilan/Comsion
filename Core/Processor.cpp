@@ -12,6 +12,11 @@ Processor::Processor(const Image& image)
 	return m_Image;
 }
 
+void Processor::LoadImage(const Image& image)
+{
+	m_Image = image;
+}
+
 // Image& Processor::Process()
 // {
 // 	Image image{m_Image};
@@ -161,13 +166,9 @@ Processor::Processor(const Image& image)
 // 	return m_Image;
 // }
 
-Image Processor::Rect(int ROI[4])
+Result Processor::Rect(const Setting& setting, double ROI[4])
 {
 	cv::Rect roi{ROI[0] * 2, ROI[1] * 2, (ROI[2] - ROI[0]) * 2, (ROI[3] - ROI[1]) * 2};
-
-#ifdef COMSION_DEBUG
-	std::cerr << "ROI: " << roi << std::endl;
-#endif
 
 	cv::Mat image{m_Image.GetImage()};
 	cv::Mat roiImage = image(roi);
@@ -175,20 +176,10 @@ Image Processor::Rect(int ROI[4])
 	cv::Mat cannyImg;
 	cv::Canny(roiImage, cannyImg, 80, 160, 3);
 
-#ifdef COMSION_DEBUG
-	cv::imshow("11", roiImage);
-	cv::imshow("", cannyImg);
-	cv::waitKey();
-#endif
-
 	// 图像膨胀
-	cv::Mat kernelImg{cv::getStructuringElement(0, cv::Size{9, 9})};
+	int kernelParam = setting.GetData("KernelParam") * 2 - 1;
+	cv::Mat kernelImg{cv::getStructuringElement(0, cv::Size{kernelParam, kernelParam})};
 	cv::dilate(cannyImg, cannyImg, kernelImg);
-
-#ifdef COMSION_DEBUG
-	cv::imshow("dilate", cannyImg);
-	cv::waitKey();
-#endif
 
 	// 外接矩形
 	std::vector<std::vector<cv::Point>> contours;
@@ -196,23 +187,17 @@ Image Processor::Rect(int ROI[4])
 	std::vector<cv::Point2f> centers;
 	cv::findContours(cannyImg, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point{});
 
-#ifdef COMSION_DEBUG
-	std::cout << "contours.size(): " << contours.size() << std::endl;
-#endif
-
+	int minAreaParam = setting.GetData("AreaMinParam");
+	int maxAreaParam = setting.GetData("AreaMaxParam");
 	for (int i = 0; i < contours.size(); ++i)
 	{
 		double area = cv::contourArea(contours[i]);
-		if (area < 200 || area > 40000)
+		if (area < minAreaParam || area > maxAreaParam)
 		{
 			contours.erase(contours.begin() + i);
 			--i;
 		}
 	}
-
-#ifdef COMSION_DEBUG
-	std::cout << "contours.size(): " << contours.size() << std::endl;
-#endif
 
 	// 画四条线
 	Image img2 = m_Image;
@@ -243,27 +228,43 @@ Image Processor::Rect(int ROI[4])
 		cv::circle(*img2, center, 4, cv::Scalar{0, 0, 255}, -1);
 	}
 
+	// 直线
 	cv::Vec4f line;
-	cv::fitLine(centers, line, cv::DIST_L1, 0, 0.01, 0.01);
-
-#ifdef COMSION_DEBUG
-	std::cout << line << std::endl;
-#endif
+	cv::fitLine(centers, line, cv::DIST_L1, 0.1, 0.01, 0.01);
 
 	double k = line[1] / line[0];
 	cv::Point2d point1{line[2], line[3]};
 	cv::Point2d point2{line[2], line[3]};
-	while (point1.x <= 1292 || point1.y <= 964)
+	double deltaRoi;
+	// 存储结果
+	if (m_Result.size() > 1)
+	{
+		deltaRoi = line[3] - m_Result.back();
+		ROI[1] += deltaRoi * 0.5;
+		ROI[3] += deltaRoi * 0.5;
+	}
+	m_Result.push_back(line[3]);
+
+	int count = 0;
+
+	while (point1.x <= m_Image.GetWidth() && point1.y <= m_Image.GetHeight() && point1.x >= 0 && point1.y >= 0 && count <= 1000)
 	{
 		point1.x += line[0];
 		point1.y += line[1];
-
+		++count;
 	}
-	while (point2.x >= 0 || point2.y >= 0)
+	count = 0;
+	while (point2.x <= m_Image.GetWidth() && point2.y <= m_Image.GetHeight() && point2.x >= 0 && point2.y >= 0 && count <= 1000)
 	{
 		point2.x = point2.x - line[0];
 		point2.y = point2.y - line[1];
+		++count;
 	}
 	cv::line(*img2, point1, point2, cv::Scalar{0, 255, 0}, 2);
-	return img2;
+	return {.image = img2, .origin = m_Result.front(), .current = m_Result.back(), .k = k, .delta = deltaRoi};
+}
+
+void Processor::ClearResult()
+{
+	m_Result.clear();
 }

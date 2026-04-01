@@ -2,7 +2,16 @@
 #define PROCESSOR_PROCESSOR_H
 
 #include <Core/Image.h>
-#include <Core/Color.h>
+#include <Core/Setting.h>
+
+struct Result
+{
+	Image image;
+	double origin;
+	double current;
+	double k;
+	double delta;
+};
 
 class Processor
 {
@@ -13,11 +22,15 @@ public:
 
 public:
 	[[nodiscard]] Image GetOriginalImage() const;
+	void LoadImage(const Image& image);
+
+public:
+	void ClearResult();
 
 public:
 	// Image& Process();
 	// Image& Contours();
-	Image Rect(int ROI[4]);
+	Result Rect(const Setting& setting, double ROI[4]);
 
 private:
 	// void Convert(Image& image, cv::ColorConversionCodes type);
@@ -55,6 +68,7 @@ private:
 
 private:
 	Image m_Image;
+	std::vector<double> m_Result;
 };
 
 #endif

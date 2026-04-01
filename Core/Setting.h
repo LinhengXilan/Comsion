@@ -12,10 +12,12 @@ public:
 public:
 	friend class Dialog;
 
-	std::string GetData(const std::string& token);
+	int32_t GetData(const std::string& token) const;
+	void SetData(const std::string& token, const std::string& data);
 
 private:
 	void Load(const std::string& filepath);
+	void Save(const std::string& filepath);
 
 private:
 	std::string m_Filepath;

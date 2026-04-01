@@ -54,6 +54,11 @@ Image::Image(const cv::Mat& image)
 	return m_Image->step;
 }
 
+bool Image::Is_Empty() const
+{
+	return m_Image->empty();
+}
+
 void Image::SetImage(const cv::Mat& image)
 {
 	*m_Image = image;

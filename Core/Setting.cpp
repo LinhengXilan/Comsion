@@ -1,13 +1,21 @@
 #include <Core/Setting.h>
 
+int32_t Setting::GetData(const std::string& token) const
+{
+	return std::stoi(m_Data.at(token));
+}
+
+void Setting::SetData(const std::string& token, const std::string& data)
+{
+	if (data.empty()) return;
+	m_Data[token] = data;
+}
+
 void Setting::Load(const std::string& filepath)
 {
 	m_Filepath = filepath;
 	std::ifstream ifs(filepath, std::ios::in | std::ios::binary);
 	if (!ifs.is_open()) return;
-#ifdef COMSION_DEBUG
-	std::cout << __FUNCTION__ << std::endl;
-#endif
 	std::string content;
 	ifs.seekg(0, std::ios::end);
 	size_t size = ifs.tellg();
@@ -19,26 +27,34 @@ void Setting::Load(const std::string& filepath)
 		ifs.close();
 	}
 	size_t pos{0};
-	while (pos + 1 != std::string::npos)
+	size_t splitPos{0};
+	while (splitPos != std::string::npos)
 	{
 		std::string token;
 		std::string data;
-		size_t splitPos{0};
-		splitPos = content.find_first_of(':', splitPos);
-		token = content.substr(pos, splitPos - pos - 1);
-		pos = splitPos;
-		splitPos = content.find_first_of('\n', splitPos);
-		data = content.substr(pos + 1, splitPos - pos - 2);
-		pos = splitPos;
-#ifdef COMSION_DEBUG
-		std::cout << token << ':' << data << std::endl;
-#endif
+
+		splitPos = content.find_first_of(':', pos);
+		token = content.substr(pos, splitPos - pos);
+		pos = splitPos + 2;
+
+		splitPos = content.find_first_of('\n', pos);
+		data = content.substr(pos, splitPos - pos);
+		pos = splitPos + 1;
 		m_Data.emplace(token, data);
 	}
 }
 
-std::string Setting::GetData(const std::string& token)
+void Setting::Save(const std::string& filepath)
 {
-	if (!m_Data.contains(token)) return "";
-	return m_Data.at(token);
+	std::ofstream ofs(filepath, std::ios::out | std::ios::binary);
+	if (!ofs.is_open()) return;
+	for (auto& it : m_Data)
+	{
+		if (it.second == "")
+		{
+			continue;
+		}
+		ofs << it.first << ": " << it.second << '\n';
+	}
+	ofs.close();
 }
