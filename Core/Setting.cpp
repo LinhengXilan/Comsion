@@ -2,6 +2,10 @@
 
 int32_t Setting::GetData(const std::string& token) const
 {
+	if (!m_Data.contains(token))
+	{
+		return 0;
+	}
 	return std::stoi(m_Data.at(token));
 }
 
@@ -14,34 +18,36 @@ void Setting::SetData(const std::string& token, const std::string& data)
 void Setting::Load(const std::string& filepath)
 {
 	m_Filepath = filepath;
-	std::ifstream ifs(filepath, std::ios::in | std::ios::binary);
-	if (!ifs.is_open()) return;
+	std::ifstream ifs(filepath, std::ios::in);
+	if (!ifs.is_open())
+	{
+		std::cerr << "无法加载配置文件：" << filepath << std::endl;
+		return;
+	}
+	m_Data.clear();
 	std::string content;
-	ifs.seekg(0, std::ios::end);
-	size_t size = ifs.tellg();
-	if (size != -1)
+	while (std::getline(ifs, content))
 	{
-		content.resize(size);
-		ifs.seekg(0, std::ios::beg);
-		ifs.read(&content[0], content.size());
-		ifs.close();
-	}
-	size_t pos{0};
-	size_t splitPos{0};
-	while (splitPos != std::string::npos)
-	{
-		std::string token;
-		std::string data;
+		if (content.empty()) continue;
 
-		splitPos = content.find_first_of(':', pos);
-		token = content.substr(pos, splitPos - pos);
-		pos = splitPos + 2;
+		// 查找分隔符
+		auto pos = content.find(':');
+		if (pos == std::string::npos)
+		{
+			std::cerr << "配置文件格式错误：" << content << std::endl;
+			continue;
+		}
 
-		splitPos = content.find_first_of('\n', pos);
-		data = content.substr(pos, splitPos - pos);
-		pos = splitPos + 1;
-		m_Data.emplace(token, data);
+		// 提取 key 和 value
+		std::string token = content.substr(0, pos);
+		std::string data = content.substr(pos + 1);
+
+#ifdef COMSION_DEBUG
+		std::cout << '[' << __FUNCTION__ << ']' << token << ':' << data << std::endl;
+#endif
+		m_Data[token] = data;
 	}
+	ifs.close();
 }
 
 void Setting::Save(const std::string& filepath)

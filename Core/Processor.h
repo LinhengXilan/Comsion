@@ -11,6 +11,7 @@ struct Result
 	double current;
 	double k;
 	double delta;
+	int contourCount;
 };
 
 class Processor
@@ -33,7 +34,7 @@ public:
 	Result Rect(const Setting& setting, double ROI[4]);
 
 private:
-	// void Convert(Image& image, cv::ColorConversionCodes type);
+	void Convert(Image& image, cv::ColorConversionCodes type);
 	// void PixelHistogram(Image& image, bool isDrawHist = true);
 	// void DrawRectangle(Image& image, const cv::Point& pointLU, const cv::Point& pointRD, const Color::RGB& color, int32_t thickness = 200);
 	// void DrawRectangle(Image& image, const cv::Point& point, const cv::Mat& mat, const Color::RGB& color, int32_t thickness = 200);

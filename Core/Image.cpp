@@ -93,7 +93,7 @@ const cv::Mat& Image::operator*() const
 
 void Image::LoadImage(const std::string& filepath)
 {
-	*m_Image = cv::imread(filepath, cv::IMREAD_COLOR_BGR);
+	*m_Image = cv::imread(filepath, cv::IMREAD_COLOR);
 	if (m_Image->empty())
 	{
 		std::cerr << "Failed to load image from: " << filepath << std::endl;

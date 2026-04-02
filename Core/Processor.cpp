@@ -33,13 +33,13 @@ void Processor::LoadImage(const Image& image)
 // 	return m_Image;
 // }
 
-// void Processor::Convert(Image& image, cv::ColorConversionCodes code)
-// {
-// 	Image processingImage;
-// 	cv::cvtColor(*image, *processingImage, code);
-// 	image = processingImage;
-// }
-//
+void Processor::Convert(Image& image, cv::ColorConversionCodes code)
+{
+	Image processingImage;
+	cv::cvtColor(*image, *processingImage, code);
+	image = processingImage;
+}
+
 // void Processor::PixelHistogram(Image& image, bool isDrawHist)
 // {
 // 	cv::Mat histogram;
@@ -168,9 +168,23 @@ void Processor::LoadImage(const Image& image)
 
 Result Processor::Rect(const Setting& setting, double ROI[4])
 {
-	cv::Rect roi{ROI[0] * 2, ROI[1] * 2, (ROI[2] - ROI[0]) * 2, (ROI[3] - ROI[1]) * 2};
+	cv::Rect roi{static_cast<int>(ROI[0] * 2), static_cast<int>(ROI[1] * 2), static_cast<int>((ROI[2] - ROI[0]) * 2), static_cast<int>((ROI[3] - ROI[1]) * 2)};
 
-	cv::Mat image{m_Image.GetImage()};
+	cv::Mat image;
+
+	if (m_Image.GetImage().channels() == 1)
+	{
+		cv::cvtColor(m_Image.GetImage(), image, cv::COLOR_GRAY2BGR);
+	}
+	else if (m_Image.GetImage().channels() == 4)
+	{
+		cv::cvtColor(m_Image.GetImage(), image, cv::COLOR_RGBA2BGR);
+	}
+	else
+	{
+		image = m_Image.GetImage();
+	}
+
 	cv::Mat roiImage = image(roi);
 
 	cv::Mat cannyImg;
@@ -199,6 +213,10 @@ Result Processor::Rect(const Setting& setting, double ROI[4])
 		}
 	}
 
+	if (contours.size() < setting.GetData("ContourMinParam") || contours.size() > setting.GetData("ContourMaxParam"))
+	{
+		return {.image = m_Image, .origin = m_Result.front(), .current = m_Result.back(), .k = 0, .delta = 0, .contourCount = contours.size()};
+	}
 	// 画四条线
 	Image img2 = m_Image;
 
@@ -240,8 +258,8 @@ Result Processor::Rect(const Setting& setting, double ROI[4])
 	if (m_Result.size() > 1)
 	{
 		deltaRoi = line[3] - m_Result.back();
-		ROI[1] += deltaRoi * 0.5;
-		ROI[3] += deltaRoi * 0.5;
+		ROI[0] += deltaRoi * setting.GetData("ROIJustifyParam") * 0.1;
+		ROI[1] += deltaRoi * setting.GetData("ROIJustifyParam") * 0.1;
 	}
 	m_Result.push_back(line[3]);
 
@@ -261,7 +279,11 @@ Result Processor::Rect(const Setting& setting, double ROI[4])
 		++count;
 	}
 	cv::line(*img2, point1, point2, cv::Scalar{0, 255, 0}, 2);
-	return {.image = img2, .origin = m_Result.front(), .current = m_Result.back(), .k = k, .delta = deltaRoi};
+#ifdef COMSION_DEBUG
+	cv::imshow("", *img2);
+	cv::waitKey(0);
+#endif
+	return {.image = img2, .origin = m_Result.front(), .current = m_Result.back(), .k = k, .delta = deltaRoi, .contourCount = contours.size()};
 }
 
 void Processor::ClearResult()
