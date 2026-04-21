@@ -35,6 +35,12 @@ Dialog::Dialog(QWidget* parent)
 	connect(m_DirSelectionButton, SIGNAL(clicked()), this, SLOT(DirSelectionButtonClicked()));
 	controlLayout->addWidget(m_DirSelectionButton);
 
+	m_ProcessModeComboBox = new QComboBox;
+	m_ProcessModeComboBox->addItem("外接矩形");
+	m_ProcessModeComboBox->addItem("模板匹配");
+	connect(m_ProcessModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(ProcessModeComboBoxChanged(int)));
+	controlLayout->addWidget(m_ProcessModeComboBox);
+
 	m_RunButton = new QPushButton("运行");
 	connect(m_RunButton, SIGNAL(clicked()), this, SLOT(RunButtonClicked()));
 	controlLayout->addWidget(m_RunButton);
@@ -53,13 +59,25 @@ Dialog::Dialog(QWidget* parent)
 	connect(m_SelectROIButton, SIGNAL(clicked()), this, SLOT(SelectROIButtonClicked()));
 	roiLayout->addWidget(m_SelectROIButton);
 
-	roiLayout->addStretch(1);
 
 	m_ROIText = new QLabel("ROI区域：");
 	roiLayout->addWidget(m_ROIText);
-	
+
 	m_ROIDataText = new QLabel("0 ，0 ，0 ，0");
 	roiLayout->addWidget(m_ROIDataText);
+
+	roiLayout->addStretch(1);
+
+	m_SelectTemplateButton = new QPushButton("选择模板区域");
+	//m_SelectTemplateButton->setEnabled(true);
+	connect(m_SelectTemplateButton, SIGNAL(clicked()), this, SLOT(SelectTemplateButtonClicked()));
+	roiLayout->addWidget(m_SelectTemplateButton);
+
+	m_TemplateText = new QLabel("模板区域");
+	roiLayout->addWidget(m_TemplateText);
+
+	m_TemplateDataText = new QLabel("0, 0, 0, 0");
+	roiLayout->addWidget(m_TemplateDataText);
 
 	layout->addLayout(roiLayout);
 	
@@ -94,7 +112,7 @@ Dialog::Dialog(QWidget* parent)
 
 	outputLayout->addStretch(1);
 
-	m_KText = new QLabel("k：");
+	m_KText = new QLabel("斜率：");
 	outputLayout->addWidget(m_KText);
 
 	m_KDataText = new QLabel("0");
@@ -146,14 +164,14 @@ Dialog::Dialog(QWidget* parent)
 
 	paramLayout->addStretch(1);
 
-	m_ROIjustifyParamText = new QLabel("ROI调整系数");
-	paramLayout->addWidget(m_ROIjustifyParamText);
+	m_RoiJustifyParamText = new QLabel("ROI调整系数");
+	paramLayout->addWidget(m_RoiJustifyParamText);
 
-	m_ROIjustifyParam = new QSpinBox;
-	m_ROIjustifyParam->setFixedHeight(30);
-	m_ROIjustifyParam->setMaximum(10);
-	connect(m_ROIjustifyParam, SIGNAL(valueChanged(int)), this, SLOT(ROIjustifyParamChanged(int)));
-	paramLayout->addWidget(m_ROIjustifyParam);
+	m_RoiJustifyParam = new QSpinBox;
+	m_RoiJustifyParam->setFixedHeight(30);
+	m_RoiJustifyParam->setMaximum(10);
+	connect(m_RoiJustifyParam, SIGNAL(valueChanged(int)), this, SLOT(ROIjustifyParamChanged(int)));
+	paramLayout->addWidget(m_RoiJustifyParam);
 
 	paramLayout->addStretch(1);
 
@@ -208,7 +226,6 @@ Dialog::Dialog(QWidget* parent)
 
 void Dialog::FileSelectionButtonClicked()
 {
-	m_InputType = InputType::File;
 	is_Run = false;
 	m_ImagePath = QFileDialog::getOpenFileName(
 		this,
@@ -221,6 +238,7 @@ void Dialog::FileSelectionButtonClicked()
 		QMessageBox::warning(this, "错误", "文件不存在", QMessageBox::Ok);
 		return;
 	}
+	m_InputType = InputType::File;
 	m_Image.LoadImage(m_ImagePath.toStdString());
 	m_ROIData[0] = 0;
 	m_ROIData[1] = 0;
@@ -232,7 +250,6 @@ void Dialog::FileSelectionButtonClicked()
 
 void Dialog::DirSelectionButtonClicked()
 {
-	m_InputType = InputType::Directory;
 	is_Run = false;
 	QString path = QFileDialog::getExistingDirectory(this, "选择文件夹", ".");
 	if (path.isEmpty())
@@ -246,6 +263,7 @@ void Dialog::DirSelectionButtonClicked()
 		return;
 	}
 	dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+
 	QStringList imageList = dir.entryList();
 	for (auto& it : imageList)
 	{
@@ -261,6 +279,7 @@ void Dialog::DirSelectionButtonClicked()
 		}
 	);
 
+	m_InputType = InputType::Directory;
 	m_ImagePath = m_ImageVec.front().c_str();
 	m_Image.LoadImage(m_ImagePath.toStdString());
 	m_ROIData[0] = 0;
@@ -270,8 +289,22 @@ void Dialog::DirSelectionButtonClicked()
 	this->update();
 }
 
+void Dialog::ProcessModeComboBoxChanged(int value)
+{
+	switch (value)
+	{
+	case 0:
+		m_ProcessType = ProcessType::Rect;
+		break;
+	case 1:
+		m_ProcessType = ProcessType::Match;
+		break;
+	}
+}
+
 void Dialog::RunButtonClicked()
 {
+	if (is_Run) return;
 	is_Run = true;
 	m_PauseButton->setEnabled(true);
 
@@ -285,7 +318,17 @@ void Dialog::RunButtonClicked()
 
 		m_Processor.LoadImage(image);
 		m_Processor.ClearResult();
-		m_Result = m_Processor.Rect(m_Setting, m_ROIData);
+		switch (m_ProcessType)
+		{
+		case ProcessType::Rect:
+			m_Result = m_Processor.Rect(m_Setting, m_ROIData);
+			break;
+		case ProcessType::Match:
+			m_Result = m_Processor.Match(m_Setting, m_ROIData, m_TemplateData);
+			break;
+		default:
+			break;
+		}
 
 		m_Image = m_Result.image;
 		m_KDataText->setText(std::to_string(m_Result.k).c_str());
@@ -314,8 +357,18 @@ void Dialog::RunButtonClicked()
 					image.LoadImage(it);
 					m_Image = image;
 					m_Processor.LoadImage(image);
-					m_Result = m_Processor.Rect(m_Setting, m_ROIData);
-					QThread::msleep(500);
+					switch (m_ProcessType)
+					{
+					case ProcessType::Rect:
+						m_Result = m_Processor.Rect(m_Setting, m_ROIData);
+						break;
+					case ProcessType::Match:
+						m_Result = m_Processor.Match(m_Setting, m_ROIData, m_TemplateData);
+						break;
+					default:
+						break;
+					}
+					QThread::msleep(33);
 					emit ImageReady(it.c_str());
 					if (m_Future.isFinished())
 					{
@@ -348,6 +401,13 @@ void Dialog::PauseButtonClicked()
 
 void Dialog::SelectROIButtonClicked()
 {
+	m_SelectMode = SelectMode::RoiArea;
+	is_SelectMode = true;
+}
+
+void Dialog::SelectTemplateButtonClicked()
+{
+	m_SelectMode = SelectMode::TemplateImage;
 	is_SelectMode = true;
 }
 
@@ -355,7 +415,6 @@ void Dialog::SelectROIButtonClicked()
 
 void Dialog::ClearCmpButtonClicked()
 {
-	m_KDataText->setText("0");
 	m_BaseDataText->setText("0");
 	m_CmpOriginDataText->setText("0");
 	m_CmpPreDataText->setText("0");
@@ -393,7 +452,7 @@ void Dialog::LoadSetting()
 	m_KernelParam->setValue(m_Setting.GetData("KernelParam"));
 	m_AreaMinParam->setValue(m_Setting.GetData("AreaMinParam"));
 	m_AreaMaxParam->setValue(m_Setting.GetData("AreaMaxParam"));
-	m_ROIjustifyParam->setValue(m_Setting.GetData("ROIJustifyParam"));
+	m_RoiJustifyParam->setValue(m_Setting.GetData("ROIJustifyParam"));
 	m_ContourMinParam->setValue(m_Setting.GetData("ContourMinParam"));
 	m_ContourMaxParam->setValue(m_Setting.GetData("ContourMaxParam"));
 }
@@ -457,20 +516,39 @@ void Dialog::OnPaint()
 	painter.setPen(pen);
 
 	painter.drawPixmap(0, 0, pixmap.width() * m_AspectRatio, pixmap.height() * m_AspectRatio, QPixmap{m_ImagePath});
+
 	painter.drawRect(
 		m_ROIData[0],
 		m_ROIData[1],
 		m_ROIData[2] - m_ROIData[0],
 		m_ROIData[3] - m_ROIData[1]
 	);
+
+	pen.setColor(Qt::green);
+	painter.drawRect(
+		m_TemplateData[0],
+		m_TemplateData[1],
+		m_TemplateData[2] - m_TemplateData[0],
+		m_TemplateData[3] - m_TemplateData[1]
+	);
+
 	std::string roi = std::to_string(m_ROIData[0]);
-	roi.append(" ，");
+	roi.append(", ");
 	roi.append(std::to_string(m_ROIData[1]));
-	roi.append(" ，");
+	roi.append(", ");
 	roi.append(std::to_string(m_ROIData[2]));
-	roi.append(" ，");
+	roi.append(", ");
 	roi.append(std::to_string(m_ROIData[3]));
 	m_ROIDataText->setText(roi.c_str());
+
+	std::string templateText = std::to_string(m_TemplateData[0]);
+	templateText.append(", ");
+	templateText.append(std::to_string(m_TemplateData[1]));
+	templateText.append(", ");
+	templateText.append(std::to_string(m_TemplateData[2]));
+	templateText.append(", ");
+	templateText.append(std::to_string(m_TemplateData[3]));
+	m_TemplateDataText->setText(templateText.c_str());
 }
 
 void Dialog::mousePressEvent(QMouseEvent* event)
@@ -478,10 +556,20 @@ void Dialog::mousePressEvent(QMouseEvent* event)
 	if (event->button() == Qt::LeftButton && is_SelectMode)
 	{
 		is_MousePressed = true;
-		m_ROIData[0] = event->position().x() - m_LabelLeft->pos().x();
-		m_ROIData[1] = event->position().y();
-		m_ROIData[2] = 0;
-		m_ROIData[3] = 0;
+		double* data;
+		switch (m_SelectMode)
+		{
+		case SelectMode::RoiArea:
+			data = m_ROIData;
+			break;
+		case SelectMode::TemplateImage:
+			data = m_TemplateData;
+			break;
+		}
+		data[0] = event->position().x() - m_LabelLeft->pos().x();
+		data[1] = event->position().y();
+		data[2] = 0;
+		data[3] = 0;
 	}
 	this->update();
 }
@@ -490,8 +578,18 @@ void Dialog::mouseMoveEvent(QMouseEvent* event)
 {
 	if (is_MousePressed && is_SelectMode)
 	{
-		m_ROIData[2] = event->position().x() - m_LabelLeft->pos().x();
-		m_ROIData[3] = event->position().y();
+		double* data;
+		switch (m_SelectMode)
+		{
+		case SelectMode::RoiArea:
+			data = m_ROIData;
+			break;
+		case SelectMode::TemplateImage:
+			data = m_TemplateData;
+			break;
+		}
+		data[2] = event->position().x() - m_LabelLeft->pos().x();
+		data[3] = event->position().y();
 	}
 	this->update();
 }
@@ -502,8 +600,18 @@ void Dialog::mouseReleaseEvent(QMouseEvent* event)
 	{
 		is_MousePressed = false;
 		is_SelectMode = false;
-		m_ROIData[2] = event->position().x() - m_LabelLeft->pos().x();
-		m_ROIData[3] = event->position().y();
+		double* data;
+		switch (m_SelectMode)
+		{
+		case SelectMode::RoiArea:
+			data = m_ROIData;
+			break;
+		case SelectMode::TemplateImage:
+			data = m_TemplateData;
+			break;
+		}
+		data[2] = event->position().x() - m_LabelLeft->pos().x();
+		data[3] = event->position().y();
 	}
 	this->update();
 }
@@ -533,10 +641,10 @@ void Dialog::OnImageReady(const QString& path)
 			Qt::SmoothTransformation
 		)
 	);
-
+	this->update();
 	m_KDataText->setText(std::to_string(m_Result.k).c_str());
 	m_BaseDataText->setText(std::to_string(m_Result.origin).c_str());
 	m_CmpOriginDataText->setText(std::to_string(m_Result.current - m_Result.origin).c_str());
 	m_CmpPreDataText->setText(std::to_string(m_Result.delta).c_str());
-	m_ContourCountText->setText(std::to_string(m_Result.contourCount).c_str());
+	m_ContourCountDataText->setText(std::to_string(m_Result.contourCount).c_str());
 }

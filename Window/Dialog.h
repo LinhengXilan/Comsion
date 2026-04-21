@@ -19,18 +19,31 @@ private:
 		Directory,
 	};
 
+	enum class ProcessType : uint8_t
+	{
+		Rect,
+		Match
+	};
+
+	enum class SelectMode : uint8_t
+	{
+		RoiArea,
+		TemplateImage
+	};
+
 public:
 	explicit Dialog(QWidget* parent = nullptr);
 	~Dialog() override = default;
 
 private slots:
 	void FileSelectionButtonClicked();
+	void DirSelectionButtonClicked();
+	void ProcessModeComboBoxChanged(int value);
 	void RunButtonClicked();
 	void StopButtonClicked();
-	void DirSelectionButtonClicked();
-
 
 	void SelectROIButtonClicked();
+	void SelectTemplateButtonClicked();
 
 	void PauseButtonClicked();
 
@@ -68,6 +81,9 @@ private:
 	QLabel* m_LabelRight;
 	QPushButton* m_FileSelectionButton;
 	QPushButton* m_DirSelectionButton;
+	QComboBox* m_ProcessModeComboBox;
+	ProcessType m_ProcessType = ProcessType::Rect;
+	Image m_Template;
 	QPushButton* m_RunButton;
 	QPushButton* m_PauseButton;
 	std::atomic<bool> is_Paused = false;
@@ -76,6 +92,10 @@ private:
 	QLabel* m_ROIText;
 	QLabel* m_ROIDataText;
 	double m_ROIData[4];
+	QPushButton* m_SelectTemplateButton;
+	QLabel* m_TemplateText;
+	QLabel* m_TemplateDataText;
+	double m_TemplateData[4];
 
 	QPushButton* m_ClearCmpButton;
 	QLabel* m_BaseText;
@@ -95,9 +115,9 @@ private:
 	QSpinBox* m_AreaMinParam;
 	QLabel* m_AreaMaxParamText;
 	QSpinBox* m_AreaMaxParam;
-	QLabel* m_ROIjustifyParamText;
-	QSpinBox* m_ROIjustifyParam;
-	QLabel*m_ContourMinParamText;
+	QLabel* m_RoiJustifyParamText;
+	QSpinBox* m_RoiJustifyParam;
+	QLabel* m_ContourMinParamText;
 	QSpinBox* m_ContourMinParam;
 	QLabel* m_ContourMaxParamText;
 	QSpinBox* m_ContourMaxParam;
@@ -118,6 +138,7 @@ private:
 	std::vector<std::string> m_ImageVec;
 	Image m_Image;
 	float m_AspectRatio = 0.5;
+	SelectMode m_SelectMode;
 	// 鼠标绘制
 	bool is_MousePressed = false;
 	bool is_SelectMode = false;

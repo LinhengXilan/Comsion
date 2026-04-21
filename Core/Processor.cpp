@@ -17,102 +17,12 @@ void Processor::LoadImage(const Image& image)
 	m_Image = image;
 }
 
-// Image& Processor::Process()
-// {
-// 	Image image{m_Image};
-// 	Convert(image, cv::COLOR_BGR2GRAY);
-// 	m_Image = image;
-// 	/* 边缘检测 */
-// 	// EqualizeHist();
-// 	// Filter({ 3,3 }, 5);
-// 	// EdgeDetection(EdgeDetectionMethod::Canny, 80, 180);
-//
-// 	// 模板匹配
-// 	// MatchTemplate("Assets/1t.bmp");
-// 	// ConvertScaleAbs(0.8f, 0.0f);
-// 	return m_Image;
-// }
-
 void Processor::Convert(Image& image, cv::ColorConversionCodes code)
 {
 	Image processingImage;
 	cv::cvtColor(*image, *processingImage, code);
 	image = processingImage;
 }
-
-// void Processor::PixelHistogram(Image& image, bool isDrawHist)
-// {
-// 	cv::Mat histogram;
-// 	constexpr int channels[1] = { 0 };
-// 	constexpr int maxBin[1] = { 256 };
-// 	float range[2] = { 0, 255 };
-// 	const float* ranges[1] = { range };
-// 	cv::calcHist(image.GetImagePointer(), 1, channels, cv::Mat(), histogram, 1, maxBin, ranges);
-//
-// 	cv::Mat normalizedHistogram;
-// 	cv::normalize(histogram, normalizedHistogram, 1, 0, cv::NORM_INF, -1, cv::Mat());
-// 	int windowWidth = 800;
-// 	int windowHeight = 450;
-// 	int width = 2;
-// 	cv::Mat histImage(windowHeight, windowWidth, CV_8UC3, cv::Scalar(0, 0, 0));
-// 	for (int i = 0; i < histogram.rows; i++)
-// 	{
-// 		cv::rectangle(
-// 			histImage,
-// 			cv::Point(
-// 				width * i,
-// 				windowHeight - 1
-// 			),
-// 			cv::Point(
-// 				width * (i + 1) - 1,
-// 				windowHeight - cvRound(normalizedHistogram.at<float>(i) * windowHeight)
-// 			),
-// 			cv::Scalar(255, 255, 255),
-// 			-1
-// 		);
-// 	}
-// 	// cv::imshow(m_Image.GetName() + " | Pixel Histogram", histImage);
-// }
-//
-// void Processor::DrawRectangle(Image& image, const cv::Point& pointLU, const cv::Point& pointRD, const Color::RGB& color, int32_t thickness)
-// {
-// 	cv::rectangle(*image, pointLU, pointRD, cv::Scalar{ color.B, color.G, color.R }, thickness);
-// }
-//
-// void Processor::DrawRectangle(Image& image, const cv::Point& point, const cv::Mat& mat, const Color::RGB& color, int32_t thickness)
-// {
-// 	DrawRectangle(image, point, cv::Point{ point.x + mat.cols, point.y + mat.rows }, color, thickness);
-// }
-//
-// void Processor::MatchTemplate(Image& image, const Image& templateImage, cv::TemplateMatchModes flag, const Color::RGB& color)
-// {
-// 	if (templateImage.GetImage().empty())
-// 	{
-// 		std::cerr << "Template image is empty!" << std::endl;
-// 		return;
-// 	}
-//
-// 	cv::Mat result;
-// 	cv::matchTemplate(image.GetImage(), templateImage.GetImage(), result, cv::TM_CCOEFF_NORMED);
-// 	double minVal, maxVal;
-// 	cv::Point minLoc, maxLoc;
-// 	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc);
-// 	DrawRectangle(image, maxLoc, templateImage.GetImage(), color, 2);
-// }
-//
-// void Processor::MatchTemplate(Image& image, const std::string& filepath, cv::TemplateMatchModes flag, const Color::RGB& color)
-// {
-// 	Image templateImage;
-// 	templateImage.LoadImage(filepath);
-// 	MatchTemplate(image, templateImage, flag, color);
-// }
-//
-// void Processor::Filter(Image& image, const cv::Size& size, double sigma)
-// {
-// 	Image processingImage;
-// 	cv::GaussianBlur(image.GetImage(), *processingImage, size, sigma, sigma);
-// 	processingImage.CopyTo(image);
-// }
 //
 // void Processor::EdgeDetection(Image& image, EdgeDetectionMethod method, int32_t arg0, int32_t arg1, int32_t arg2)
 // {
@@ -134,36 +44,6 @@ void Processor::Convert(Image& image, cv::ColorConversionCodes code)
 // 		image.SetImage(edge);
 // 		break;
 // 	}
-// }
-//
-// void Processor::EqualizeHist(Image& image)
-// {
-// 	Image processingImage;
-// 	cv::equalizeHist(*image, *processingImage);
-// 	processingImage.CopyTo(image);
-// }
-//
-// void Processor::ConvertScaleAbs(Image& image, double alpha, double beta)
-// {
-// 	Image processingImage;
-// 	cv::convertScaleAbs(image.GetImage(), *processingImage, alpha, beta);
-// 	processingImage.CopyTo(image);
-// }
-//
-// Image& Processor::Contours()
-// {
-// 	Convert(m_Image, cv::COLOR_BGR2GRAY);
-// 	cv::Mat binaryImage;
-// 	cv::threshold(*m_Image, binaryImage, 170, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-//
-// 	std::vector<std::vector<cv::Point>> contours;
-// 	std::vector<cv::Vec4i> hierarchy;
-// 	cv::findContours(binaryImage, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point{});
-// 	for (int i = 0; i < contours.size(); ++i)
-// 	{
-// 		cv::drawContours(*m_Image, contours, i, {0, 0, 255}, 5);
-// 	}
-// 	return m_Image;
 // }
 
 Result Processor::Rect(const Setting& setting, double ROI[4])
@@ -279,11 +159,147 @@ Result Processor::Rect(const Setting& setting, double ROI[4])
 		++count;
 	}
 	cv::line(*img2, point1, point2, cv::Scalar{0, 255, 0}, 2);
-#ifdef COMSION_DEBUG
-	cv::imshow("", *img2);
-	cv::waitKey(0);
-#endif
 	return {.image = img2, .origin = m_Result.front(), .current = m_Result.back(), .k = k, .delta = deltaRoi, .contourCount = contours.size()};
+}
+
+Result Processor::Match(const Setting& setting, double ROI[4], double templateArea[4])
+{
+	cv::Rect roi{
+		static_cast<int>(ROI[0] * 2),
+		static_cast<int>(ROI[1] * 2),
+		static_cast<int>((ROI[2] - ROI[0]) * 2),
+		static_cast<int>((ROI[3] - ROI[1]) * 2)
+	};
+	cv::Rect templ{
+		static_cast<int>(templateArea[0] * 2),
+		static_cast<int>(templateArea[1] * 2),
+		static_cast<int>((templateArea[2] - templateArea[0]) * 2),
+		static_cast<int>((templateArea[3] - templateArea[1]) * 2)
+	};
+
+	cv::Mat image;
+
+	if (m_Image.GetImage().channels() == 1)
+	{
+		cv::cvtColor(m_Image.GetImage(), image, cv::COLOR_GRAY2BGR);
+	}
+	else if (m_Image.GetImage().channels() == 4)
+	{
+		cv::cvtColor(m_Image.GetImage(), image, cv::COLOR_RGBA2BGR);
+	}
+	else
+	{
+		image = m_Image.GetImage();
+	}
+
+	Image resultImage = m_Image;
+	cv::Mat roiImage = image(roi);
+	cv::Mat templateImage = image(templ);
+	cv::Mat result;
+	cv::matchTemplate(roiImage, templateImage, result, 5);
+
+	float threshold;
+	for (int i = 0; i < result.cols; i++)
+	{
+		for (int j = 0; j < result.rows; j++)
+		{
+			// if (matchMethod == 1)
+			// {
+			// 	threshold = 0.4;
+			// 	if (result.at<float>(i, j) < threshold)
+			// 	{
+			// 		rectangle(resultImage, Point(j, i), Point(j + templ.x / 2, i + templ.y / 2), Scalar(0, 0, 255), 1, 8, 0);
+			// 	}
+			// }
+			// else if(matchMethod == 3)
+			// {
+			// 	threshold = 0.8;
+			// 	if (result.at<float>(i, j) > threshold && result.at<float>(i, j) < 1)
+			// 	{
+			// 		rectangle(resultImage, Point(j, i), Point(j + templ.x / 2, i + templ.y / 2), Scalar(0, 0, 255), 1, 8, 0);
+			// 	}
+			// }
+			// else if (matchMethod == 5)
+			// {
+			int x1 = i + roi.x;
+			// int x1 = i - (templateArea[2] - templateArea[0]) + roi.x;
+			int x2 = i + templ.width + roi.x;
+			int y1 = j + roi.y;
+			// int y1 = j - (templateArea[3] - templateArea[1]) + roi.y;
+			int y2 = j + templ.height + roi.y;
+			threshold = 0.95;
+			if (result.at<float>(j, i) > threshold && result.at<float>(j, i) < 1)
+			{
+				cv::rectangle(*resultImage, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 0, 255), 1);
+			}
+			// }
+		}
+	}
+	//cv::minMaxLoc()
+	//cv::kmeans
+	std::vector<cv::Point2f> centers;
+	// TODO: 聚类筛选
+
+
+// 	for (int i = 0; i < result.cols; ++i)
+// 	{
+// 		for (int j = 0; j < result.rows; ++j)
+// 		{
+// 			if (result.data[j + i * result.cols] >= 255)
+// 			{
+// 				int x1 = i - (templateArea[2] - templateArea[0]) + roi.x;
+// 				int x2 = i + (templateArea[2] - templateArea[0]) + roi.x;
+// 				int y1 = j - (templateArea[3] - templateArea[1]) + roi.y;
+// 				int y2 = j + (templateArea[3] - templateArea[1]) + roi.y;
+// 				cv::Point point{i + roi.x, j + roi.y};
+// 				centers.emplace_back(point);
+// 				cv::rectangle(
+// 					*resultImage,
+// 					cv::Point{x1, y1},
+// 					cv::Point{x2, y2},
+// 					cv::Scalar{255, 0, 0},
+// 					2
+// 				);
+// 				cv::circle(*resultImage, point, 4, cv::Scalar{0, 0, 255}, -1);
+// 			}
+// 		}
+// 	}
+// // TODO: CSI，线阵，面阵；成本、性能
+// 	// 直线
+// 	cv::Vec4f line;
+// 	cv::fitLine(centers, line, cv::DIST_L1, 0.1, 0.01, 0.01);
+//
+// 	double k = line[1] / line[0];
+// 	cv::Point2d point1{line[2], line[3]};
+// 	cv::Point2d point2{line[2], line[3]};
+// 	double deltaRoi;
+// 	// 存储结果
+// 	if (m_Result.size() > 1)
+// 	{
+// 		deltaRoi = line[3] - m_Result.back();
+// 		ROI[0] += deltaRoi * setting.GetData("ROIJustifyParam") * 0.1;
+// 		ROI[1] += deltaRoi * setting.GetData("ROIJustifyParam") * 0.1;
+// 	}
+// 	m_Result.push_back(line[3]);
+//
+// 	int count = 0;
+//
+// 	while (point1.x <= m_Image.GetWidth() && point1.y <= m_Image.GetHeight() && point1.x >= 0 && point1.y >= 0 && count <= 1000)
+// 	{
+// 		point1.x += line[0];
+// 		point1.y += line[1];
+// 		++count;
+// 	}
+// 	count = 0;
+// 	while (point2.x <= m_Image.GetWidth() && point2.y <= m_Image.GetHeight() && point2.x >= 0 && point2.y >= 0 && count <= 1000)
+// 	{
+// 		point2.x = point2.x - line[0];
+// 		point2.y = point2.y - line[1];
+// 		++count;
+// 	}
+// 	cv::line(*resultImage, point1, point2, cv::Scalar{0, 255, 0}, 2);
+// 	return {.image = resultImage, .origin = m_Result.front(), .current = m_Result.back(), .k = k, .delta = deltaRoi, .contourCount = centers.size()};
+	return {.image = resultImage, .origin = 0, .current = 0, .k = 0, .delta = 0, .contourCount = 0};
 }
 
 void Processor::ClearResult()
