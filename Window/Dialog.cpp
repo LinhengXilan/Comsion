@@ -6,6 +6,7 @@ Dialog::Dialog(QWidget* parent)
 	QVBoxLayout* layout = new QVBoxLayout;
 
 	// 图像显示
+	QGroupBox* imageGroupBox = new QGroupBox;
 	QHBoxLayout* imageLayout = new QHBoxLayout;
 
 	m_LabelLeft = new QLabel;
@@ -20,10 +21,12 @@ Dialog::Dialog(QWidget* parent)
 	m_LabelRight->setFixedWidth(1292 / 2);
 	m_LabelRight->setFixedHeight(964 / 2);
 	imageLayout->addWidget(m_LabelRight);
+	imageGroupBox->setLayout(imageLayout);
+	layout->addWidget(imageGroupBox);
 
-	layout->addLayout(imageLayout);
 
-
+	QGroupBox* generalGroupBox = new QGroupBox;
+	QVBoxLayout* generalLayout = new QVBoxLayout;
 	// 控制
 	QHBoxLayout* controlLayout = new QHBoxLayout;
 
@@ -49,16 +52,17 @@ Dialog::Dialog(QWidget* parent)
 	m_PauseButton->setEnabled(false);
 	connect(m_PauseButton, SIGNAL(clicked()), this, SLOT(PauseButtonClicked()));
 	controlLayout->addWidget(m_PauseButton);
-	
-	layout->addLayout(controlLayout);
+
+	generalLayout->addLayout(controlLayout);
 	
 	// ROI
-	QHBoxLayout* roiLayout = new QHBoxLayout;
-	
+	QGroupBox* roiGroupBox = new QGroupBox("区域选择");
+
+	QHBoxLayout* roiLayout = new QHBoxLayout();
+
 	m_SelectROIButton = new QPushButton("选择ROI区域");
 	connect(m_SelectROIButton, SIGNAL(clicked()), this, SLOT(SelectROIButtonClicked()));
 	roiLayout->addWidget(m_SelectROIButton);
-
 
 	m_ROIText = new QLabel("ROI区域：");
 	roiLayout->addWidget(m_ROIText);
@@ -79,9 +83,11 @@ Dialog::Dialog(QWidget* parent)
 	m_TemplateDataText = new QLabel("0, 0, 0, 0");
 	roiLayout->addWidget(m_TemplateDataText);
 
-	layout->addLayout(roiLayout);
+	roiGroupBox->setLayout(roiLayout);
+	generalLayout->addWidget(roiGroupBox);
 	
 	// 输出
+	QGroupBox* outputGroupBox = new QGroupBox("结果显示");
 	QHBoxLayout* outputLayout = new QHBoxLayout;
 
 	m_ClearCmpButton = new QPushButton("清除结果");
@@ -126,88 +132,117 @@ Dialog::Dialog(QWidget* parent)
 	m_ContourCountDataText = new QLabel("0");
 	outputLayout->addWidget(m_ContourCountDataText);
 
-	layout->addLayout(outputLayout);
+	outputGroupBox->setLayout(outputLayout);
+	generalLayout->addWidget(outputGroupBox);
+
+
 
 	// 参数
-	QHBoxLayout* paramLayout = new QHBoxLayout;
+	QGroupBox* paramGroupBox = new QGroupBox("参数控制");
+	QVBoxLayout* paramLayout = new QVBoxLayout;
+
+	// 外接矩形参数
+	QHBoxLayout* rectParamLayout = new QHBoxLayout;
 
 	// 膨胀系数
 	m_KernelParamText = new QLabel("膨胀系数");
-	paramLayout->addWidget(m_KernelParamText);
+	rectParamLayout->addWidget(m_KernelParamText);
 
 	m_KernelParam = new QSpinBox;
 	m_KernelParam->setFixedHeight(30);
 	connect(m_KernelParam, SIGNAL(valueChanged(int)), this, SLOT(KernelParamChanged(int)));
-	paramLayout->addWidget(m_KernelParam);
+	rectParamLayout->addWidget(m_KernelParam);
 
-	paramLayout->addStretch(1);
+	rectParamLayout->addStretch(1);
 
 	m_AreaMinParamText = new QLabel("最小面积");
-	paramLayout->addWidget(m_AreaMinParamText);
+	rectParamLayout->addWidget(m_AreaMinParamText);
 
 	m_AreaMinParam = new QSpinBox;
 	m_AreaMinParam->setFixedHeight(30);
 	m_AreaMinParam->setMaximum(10000);
 	connect(m_AreaMinParam, SIGNAL(valueChanged(int)), this, SLOT(AreaMinParamChanged(int)));
-	paramLayout->addWidget(m_AreaMinParam);
+	rectParamLayout->addWidget(m_AreaMinParam);
 
-	paramLayout->addStretch(1);
+	rectParamLayout->addStretch(1);
 
 	m_AreaMaxParamText = new QLabel("最大面积");
-	paramLayout->addWidget(m_AreaMaxParamText);
+	rectParamLayout->addWidget(m_AreaMaxParamText);
 
 	m_AreaMaxParam = new QSpinBox;
 	m_AreaMaxParam->setFixedHeight(30);
 	m_AreaMaxParam->setMaximum(100000);
 	connect(m_AreaMaxParam, SIGNAL(valueChanged(int)), this, SLOT(AreaMaxParamChanged(int)));
-	paramLayout->addWidget(m_AreaMaxParam);
+	rectParamLayout->addWidget(m_AreaMaxParam);
 
-	paramLayout->addStretch(1);
-
-	m_RoiJustifyParamText = new QLabel("ROI调整系数");
-	paramLayout->addWidget(m_RoiJustifyParamText);
-
-	m_RoiJustifyParam = new QSpinBox;
-	m_RoiJustifyParam->setFixedHeight(30);
-	m_RoiJustifyParam->setMaximum(10);
-	connect(m_RoiJustifyParam, SIGNAL(valueChanged(int)), this, SLOT(ROIjustifyParamChanged(int)));
-	paramLayout->addWidget(m_RoiJustifyParam);
-
-	paramLayout->addStretch(1);
+	rectParamLayout->addStretch(1);
 
 	m_ContourMinParamText = new QLabel("最小轮廓数");
-	paramLayout->addWidget(m_ContourMinParamText);
+	rectParamLayout->addWidget(m_ContourMinParamText);
 
 	m_ContourMinParam = new QSpinBox;
 	m_ContourMinParam->setFixedHeight(30);
 	m_ContourMinParam->setMaximum(10);
 	connect(m_ContourMinParam, SIGNAL(valueChanged(int)), this, SLOT(ContourMinParamChanged(int)));
-	paramLayout->addWidget(m_ContourMinParam);
+	rectParamLayout->addWidget(m_ContourMinParam);
 
-	paramLayout->addStretch(1);
+	rectParamLayout->addStretch(1);
 
 	m_ContourMaxParamText = new QLabel("最大轮廓数");
-	paramLayout->addWidget(m_ContourMaxParamText);
+	rectParamLayout->addWidget(m_ContourMaxParamText);
 
 	m_ContourMaxParam = new QSpinBox;
 	m_ContourMaxParam->setFixedHeight(30);
 	m_ContourMaxParam->setMaximum(10);
 	connect(m_ContourMaxParam, SIGNAL(valueChanged(int)), this, SLOT(ContourMaxParamChanged(int)));
-	paramLayout->addWidget(m_ContourMaxParam);
+	rectParamLayout->addWidget(m_ContourMaxParam);
+
+	paramLayout->addLayout(rectParamLayout);
+
+	// 模板匹配参数
+	QHBoxLayout* matchParamLayout = new QHBoxLayout;
+	m_ThresholdParamText = new QLabel("模板匹配筛选阈值");
+	matchParamLayout->addWidget(m_ThresholdParamText);
+
+	m_ThresholdParam = new QSpinBox;
+	m_ThresholdParam->setFixedHeight(30);
+	m_ThresholdParam->setMaximum(100);
+	connect(m_ThresholdParam, SIGNAL(valueChanged(int)), this, SLOT(ThresholdParamChanged(int)));
+	matchParamLayout->addWidget(m_ThresholdParam);
+
+	paramLayout->addLayout(matchParamLayout);
+
+	// 调整配置
+	QHBoxLayout* rejustParamLayout = new QHBoxLayout;
+	m_RoiJustifyParamText = new QLabel("ROI调整系数");
+	rejustParamLayout->addWidget(m_RoiJustifyParamText);
+
+	m_RoiJustifyParam = new QSpinBox;
+	m_RoiJustifyParam->setFixedHeight(30);
+	m_RoiJustifyParam->setMaximum(10);
+	connect(m_RoiJustifyParam, SIGNAL(valueChanged(int)), this, SLOT(ROIjustifyParamChanged(int)));
+	rejustParamLayout->addWidget(m_RoiJustifyParam);
+
+	paramLayout->addLayout(rejustParamLayout);
 
 	// 配置
+	QHBoxLayout* settingParamLayout = new QHBoxLayout;
+
 	m_Setting.Load("Settings.ini");
 	LoadSetting();
 
 	m_ReadOptionButton = new QPushButton("读取配置");
 	connect(m_ReadOptionButton, SIGNAL(clicked()), this, SLOT(ReadOptionButtonClicked()));
-	paramLayout->addWidget(m_ReadOptionButton);
+	settingParamLayout->addWidget(m_ReadOptionButton);
 
 	m_SaveOptionButton = new QPushButton("保存配置");
 	connect(m_SaveOptionButton, SIGNAL(clicked()), this, SLOT(SaveOptionButtonClicked()));
-	paramLayout->addWidget(m_SaveOptionButton);
+	settingParamLayout->addWidget(m_SaveOptionButton);
 
-	layout->addLayout(paramLayout);
+	paramLayout->addLayout(settingParamLayout);
+
+	paramGroupBox->setLayout(paramLayout);
+	generalLayout->addWidget(paramGroupBox);
 
 	// 软件控制
 	QHBoxLayout* programControlLayout = new QHBoxLayout;
@@ -216,10 +251,14 @@ Dialog::Dialog(QWidget* parent)
 	connect(m_QuitButton, SIGNAL(clicked()), this, SLOT(QuitButtonClicked()));
 	programControlLayout->addWidget(m_QuitButton);
 
-	layout->addLayout(programControlLayout);
+	generalLayout->addLayout(programControlLayout);
+
+	generalGroupBox->setLayout(generalLayout);
+	layout->addWidget(generalGroupBox);
+
 
 	setLayout(layout);
-	connect(this, SIGNAL(ImageReady(const QString&)), this, SLOT(OnImageReady(const QString&)));
+	connect(this, SIGNAL(ImageReady(const QString&, Result)), this, SLOT(OnImageReady(const QString&, Result)));
 }
 
 /*****************************************************************************/
@@ -289,9 +328,9 @@ void Dialog::DirSelectionButtonClicked()
 	this->update();
 }
 
-void Dialog::ProcessModeComboBoxChanged(int value)
+void Dialog::ProcessModeComboBoxChanged(int index)
 {
-	switch (value)
+	switch (index)
 	{
 	case 0:
 		m_ProcessType = ProcessType::Rect;
@@ -313,6 +352,7 @@ void Dialog::RunButtonClicked()
 	case InputType::File:
 	{
 		Image image;
+		Result result;
 		image.LoadImage(m_ImagePath.toStdString());
 		m_Image = image;
 
@@ -321,22 +361,16 @@ void Dialog::RunButtonClicked()
 		switch (m_ProcessType)
 		{
 		case ProcessType::Rect:
-			m_Result = m_Processor.Rect(m_Setting, m_ROIData);
+			result = m_Processor.Rect(m_Setting, m_ROIData);
 			break;
 		case ProcessType::Match:
-			m_Result = m_Processor.Match(m_Setting, m_ROIData, m_TemplateData);
+			result = m_Processor.Match(m_Setting, m_ROIData, m_TemplateData);
 			break;
 		default:
 			break;
 		}
 
-		m_Image = m_Result.image;
-		m_KDataText->setText(std::to_string(m_Result.k).c_str());
-		m_BaseDataText->setText(std::to_string(m_Result.origin).c_str());
-		m_CmpOriginDataText->setText(std::to_string(m_Result.current - m_Result.origin).c_str());
-		m_CmpPreDataText->setText(std::to_string(m_Result.delta).c_str());
-		m_ContourCountDataText->setText(std::to_string(m_Result.contourCount).c_str());
-		emit ImageReady(m_ImagePath);
+		emit ImageReady(m_ImagePath, result);
 		break;
 	}
 	case InputType::Directory:
@@ -345,6 +379,7 @@ void Dialog::RunButtonClicked()
 		m_Future = QtConcurrent::run(
 			[this] {
 				Image image;
+				Result result;
 				for (auto& it : m_ImageVec)
 				{
 					while (is_Paused.load())
@@ -360,16 +395,16 @@ void Dialog::RunButtonClicked()
 					switch (m_ProcessType)
 					{
 					case ProcessType::Rect:
-						m_Result = m_Processor.Rect(m_Setting, m_ROIData);
+						result = m_Processor.Rect(m_Setting, m_ROIData);
 						break;
 					case ProcessType::Match:
-						m_Result = m_Processor.Match(m_Setting, m_ROIData, m_TemplateData);
+						result = m_Processor.Match(m_Setting, m_ROIData, m_TemplateData);
 						break;
 					default:
 						break;
 					}
 					QThread::msleep(33);
-					emit ImageReady(it.c_str());
+					emit ImageReady(it.c_str(), result);
 					if (m_Future.isFinished())
 					{
 						m_PauseButton->setEnabled(false);
@@ -449,12 +484,13 @@ void Dialog::ReadOptionButtonClicked()
 
 void Dialog::LoadSetting()
 {
-	m_KernelParam->setValue(m_Setting.GetData("KernelParam"));
-	m_AreaMinParam->setValue(m_Setting.GetData("AreaMinParam"));
-	m_AreaMaxParam->setValue(m_Setting.GetData("AreaMaxParam"));
-	m_RoiJustifyParam->setValue(m_Setting.GetData("ROIJustifyParam"));
-	m_ContourMinParam->setValue(m_Setting.GetData("ContourMinParam"));
-	m_ContourMaxParam->setValue(m_Setting.GetData("ContourMaxParam"));
+	m_KernelParam->setValue(m_Setting.GetData("Kernel"));
+	m_AreaMinParam->setValue(m_Setting.GetData("AreaMin"));
+	m_AreaMaxParam->setValue(m_Setting.GetData("AreaMax"));
+	m_RoiJustifyParam->setValue(m_Setting.GetData("ROIJustify"));
+	m_ContourMinParam->setValue(m_Setting.GetData("ContourMin"));
+	m_ContourMaxParam->setValue(m_Setting.GetData("ContourMax"));
+	m_ThresholdParam->setValue(m_Setting.GetData("Threshold"));
 }
 
 void Dialog::SaveOptionButtonClicked()
@@ -470,32 +506,37 @@ void Dialog::SaveOptionButtonClicked()
 
 void Dialog::KernelParamChanged(int value)
 {
-	m_Setting.SetData("KernelParam", std::to_string(value));
+	m_Setting.SetData("Kernel", std::to_string(value));
 }
 
 void Dialog::AreaMinParamChanged(int value)
 {
-	m_Setting.SetData("AreaMinParam", std::to_string(value));
+	m_Setting.SetData("AreaMin", std::to_string(value));
 }
 
 void Dialog::AreaMaxParamChanged(int value)
 {
-	m_Setting.SetData("AreaMaxParam", std::to_string(value));
-}
-
-void Dialog::ROIjustifyParamChanged(int value)
-{
-	m_Setting.SetData("ROIJustifyParam", std::to_string(value));
+	m_Setting.SetData("AreaMax", std::to_string(value));
 }
 
 void Dialog::ContourMinParamChanged(int value)
 {
-	m_Setting.SetData("ContourMinParam", std::to_string(value));
+	m_Setting.SetData("ContourMin", std::to_string(value));
 }
 
 void Dialog::ContourMaxParamChanged(int value)
 {
-	m_Setting.SetData("ContourMaxParam", std::to_string(value));
+	m_Setting.SetData("ContourMax", std::to_string(value));
+}
+
+void Dialog::ThresholdParamChanged(int value)
+{
+	m_Setting.SetData("Threshold", std::to_string(value));
+}
+
+void Dialog::ROIjustifyParamChanged(int value)
+{
+	m_Setting.SetData("ROIJustify", std::to_string(value));
 }
 
 /*****************************************************************************/
@@ -596,11 +637,11 @@ void Dialog::mouseMoveEvent(QMouseEvent* event)
 
 void Dialog::mouseReleaseEvent(QMouseEvent* event)
 {
+	double* data;
 	if (event->button() == Qt::LeftButton && is_MousePressed)
 	{
 		is_MousePressed = false;
 		is_SelectMode = false;
-		double* data;
 		switch (m_SelectMode)
 		{
 		case SelectMode::RoiArea:
@@ -613,6 +654,17 @@ void Dialog::mouseReleaseEvent(QMouseEvent* event)
 		data[2] = event->position().x() - m_LabelLeft->pos().x();
 		data[3] = event->position().y();
 	}
+
+	if (data[0] > data[2])
+	{
+		std::swap(data[0], data[2]);
+	}
+	if (data[1] > data[3])
+	{
+		std::swap(data[1], data[3]);
+	}
+
+
 	this->update();
 }
 
@@ -625,9 +677,9 @@ bool Dialog::eventFilter(QObject* watched, QEvent* event)
 	return QWidget::eventFilter(watched, event);
 }
 
-void Dialog::OnImageReady(const QString& path)
+void Dialog::OnImageReady(const QString& path, const Result& result)
 {
-	m_Image = m_Result.image;
+	m_Image = result.image;
 	m_ImagePath = path;
 
 	int width = m_Image.GetWidth();
@@ -641,10 +693,9 @@ void Dialog::OnImageReady(const QString& path)
 			Qt::SmoothTransformation
 		)
 	);
-	this->update();
-	m_KDataText->setText(std::to_string(m_Result.k).c_str());
-	m_BaseDataText->setText(std::to_string(m_Result.origin).c_str());
-	m_CmpOriginDataText->setText(std::to_string(m_Result.current - m_Result.origin).c_str());
-	m_CmpPreDataText->setText(std::to_string(m_Result.delta).c_str());
-	m_ContourCountDataText->setText(std::to_string(m_Result.contourCount).c_str());
+	m_KDataText->setText(std::to_string(result.k).c_str());
+	m_BaseDataText->setText(std::to_string(result.origin).c_str());
+	m_CmpOriginDataText->setText(std::to_string(result.current - result.origin).c_str());
+	m_CmpPreDataText->setText(std::to_string(result.delta).c_str());
+	m_ContourCountDataText->setText(std::to_string(result.contourCount).c_str());
 }

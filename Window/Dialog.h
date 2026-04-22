@@ -38,7 +38,7 @@ public:
 private slots:
 	void FileSelectionButtonClicked();
 	void DirSelectionButtonClicked();
-	void ProcessModeComboBoxChanged(int value);
+	void ProcessModeComboBoxChanged(int index);
 	void RunButtonClicked();
 	void StopButtonClicked();
 
@@ -54,15 +54,16 @@ private slots:
 	void AreaMaxParamChanged(int value);
 	void ContourMinParamChanged(int value);
 	void ContourMaxParamChanged(int value);
+	void ThresholdParamChanged(int value);
 	void ROIjustifyParamChanged(int value);
 	void ReadOptionButtonClicked();
 	void SaveOptionButtonClicked();
 
 	void QuitButtonClicked();
 
-	void OnImageReady(const QString& path);
+	void OnImageReady(const QString& path, const Result& result);
 signals:
-	void ImageReady(const QString& path);
+	void ImageReady(const QString& path, const Result& result);
 
 protected:
 	void mousePressEvent(QMouseEvent* event) override;
@@ -88,6 +89,7 @@ private:
 	QPushButton* m_PauseButton;
 	std::atomic<bool> is_Paused = false;
 
+
 	QPushButton* m_SelectROIButton;
 	QLabel* m_ROIText;
 	QLabel* m_ROIDataText;
@@ -96,6 +98,7 @@ private:
 	QLabel* m_TemplateText;
 	QLabel* m_TemplateDataText;
 	double m_TemplateData[4];
+
 
 	QPushButton* m_ClearCmpButton;
 	QLabel* m_BaseText;
@@ -109,18 +112,24 @@ private:
 	QLabel* m_ContourCountText;
 	QLabel* m_ContourCountDataText;
 
+
 	QLabel* m_KernelParamText;
 	QSpinBox* m_KernelParam;
 	QLabel* m_AreaMinParamText;
 	QSpinBox* m_AreaMinParam;
 	QLabel* m_AreaMaxParamText;
 	QSpinBox* m_AreaMaxParam;
-	QLabel* m_RoiJustifyParamText;
-	QSpinBox* m_RoiJustifyParam;
 	QLabel* m_ContourMinParamText;
 	QSpinBox* m_ContourMinParam;
 	QLabel* m_ContourMaxParamText;
 	QSpinBox* m_ContourMaxParam;
+
+	QLabel* m_ThresholdParamText;
+	QSpinBox* m_ThresholdParam;
+
+	QLabel* m_RoiJustifyParamText;
+	QSpinBox* m_RoiJustifyParam;
+
 
 	QPushButton* m_ReadOptionButton;
 	QPushButton* m_SaveOptionButton;
@@ -131,7 +140,6 @@ private:
 	Setting m_Setting;
 	QFuture<void> m_Future;
 	Processor m_Processor;
-	Result m_Result;
 
 	// 图像
 	QString m_ImagePath;
@@ -145,6 +153,33 @@ private:
 	// 程序控制
 	bool is_Run = false;
 	InputType m_InputType = InputType::None;
+};
+
+
+
+
+// 自定义 QLabel 子类绘制矩形框（可选）
+class OverlayLabel : public QLabel {
+	Q_OBJECT
+public:
+	void setOverlayRects(const QRect& roi, const QRect& tpl) {
+		m_roiRect = roi;
+		m_tplRect = tpl;
+		update();  // 触发 paintEvent
+	}
+
+protected:
+	void paintEvent(QPaintEvent* event) override {
+		QLabel::paintEvent(event);  // 先绘制图片
+		QPainter painter(this);
+		painter.setPen(QPen(Qt::blue, 2));
+		painter.drawRect(m_roiRect);
+		painter.setPen(QPen(Qt::green, 2));
+		painter.drawRect(m_tplRect);
+	}
+
+private:
+	QRect m_roiRect, m_tplRect;
 };
 
 #endif
