@@ -637,9 +637,9 @@ void Dialog::mouseMoveEvent(QMouseEvent* event)
 
 void Dialog::mouseReleaseEvent(QMouseEvent* event)
 {
-	double* data;
 	if (event->button() == Qt::LeftButton && is_MousePressed)
 	{
+		double* data;
 		is_MousePressed = false;
 		is_SelectMode = false;
 		switch (m_SelectMode)
@@ -653,17 +653,15 @@ void Dialog::mouseReleaseEvent(QMouseEvent* event)
 		}
 		data[2] = event->position().x() - m_LabelLeft->pos().x();
 		data[3] = event->position().y();
+		if (data[0] > data[2])
+		{
+			std::swap(data[0], data[2]);
+		}
+		if (data[1] > data[3])
+		{
+			std::swap(data[1], data[3]);
+		}
 	}
-
-	if (data[0] > data[2])
-	{
-		std::swap(data[0], data[2]);
-	}
-	if (data[1] > data[3])
-	{
-		std::swap(data[1], data[3]);
-	}
-
 
 	this->update();
 }
