@@ -145,7 +145,7 @@ private:
 	QString m_ImagePath;
 	std::vector<std::string> m_ImageVec;
 	Image m_Image;
-	float m_AspectRatio = 0.5;
+	float m_AspectRatio;
 	SelectMode m_SelectMode;
 	// 鼠标绘制
 	bool is_MousePressed = false;

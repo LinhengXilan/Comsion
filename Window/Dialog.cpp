@@ -284,6 +284,8 @@ void Dialog::FileSelectionButtonClicked()
 	m_ROIData[2] = m_Image.GetWidth() / 2 - 1;
 	m_ROIData[3] = m_Image.GetHeight() / 2 - 1;
 
+	m_AspectRatio = static_cast<float>(1292) / static_cast<float>(m_Image.GetWidth()) * 0.5;
+
 	this->update();
 }
 

@@ -93,10 +93,10 @@ Result Processor::Rect(const Setting& setting, double ROI[4])
 		}
 	}
 
-	if (contours.size() < setting.GetData("ContourMin") || contours.size() > setting.GetData("ContourMax"))
-	{
-		return {.image = m_Image, .origin = m_Result.front(), .current = m_Result.back(), .k = 0, .delta = 0, .contourCount = contours.size()};
-	}
+	//if (contours.size() < setting.GetData("ContourMin") || contours.size() > setting.GetData("ContourMax"))
+	//{
+	//	return {.image = m_Image, .origin = 0., .current = 0., .k = 0, .delta = 0, .contourCount = static_cast<int>(contours.size())};
+	//}
 	// 画四条线
 	Image img2 = m_Image;
 
