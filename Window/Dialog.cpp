@@ -281,8 +281,8 @@ void Dialog::FileSelectionButtonClicked()
 	m_Image.LoadImage(m_ImagePath.toStdString());
 	m_ROIData[0] = 0;
 	m_ROIData[1] = 0;
-	m_ROIData[2] = m_Image.GetWidth() / 2 - 1;
-	m_ROIData[3] = m_Image.GetHeight() / 2 - 1;
+	m_ROIData[2] = m_Image.GetWidth() - 1;
+	m_ROIData[3] = m_Image.GetHeight() - 1;
 
 	m_AspectRatio = static_cast<float>(1292) / static_cast<float>(m_Image.GetWidth()) * 0.5;
 
@@ -325,8 +325,8 @@ void Dialog::DirSelectionButtonClicked()
 	m_Image.LoadImage(m_ImagePath.toStdString());
 	m_ROIData[0] = 0;
 	m_ROIData[1] = 0;
-	m_ROIData[2] = m_Image.GetWidth() / 2 - 1;
-	m_ROIData[3] = m_Image.GetHeight() / 2 - 1;
+	m_ROIData[2] = m_Image.GetWidth() - 1;
+	m_ROIData[3] = m_Image.GetHeight() - 1;
 	this->update();
 }
 
@@ -371,7 +371,7 @@ void Dialog::RunButtonClicked()
 		default:
 			break;
 		}
-
+		is_Run = false;
 		emit ImageReady(m_ImagePath, result);
 		break;
 	}
@@ -409,6 +409,7 @@ void Dialog::RunButtonClicked()
 					emit ImageReady(it.c_str(), result);
 					if (m_Future.isFinished())
 					{
+						is_Run = false;
 						m_PauseButton->setEnabled(false);
 					}
 				}
@@ -561,18 +562,18 @@ void Dialog::OnPaint()
 	painter.drawPixmap(0, 0, pixmap.width() * m_AspectRatio, pixmap.height() * m_AspectRatio, QPixmap{m_ImagePath});
 
 	painter.drawRect(
-		m_ROIData[0],
-		m_ROIData[1],
-		m_ROIData[2] - m_ROIData[0],
-		m_ROIData[3] - m_ROIData[1]
+		m_ROIData[0] * m_AspectRatio,
+		m_ROIData[1] * m_AspectRatio,
+		m_ROIData[2] * m_AspectRatio - m_ROIData[0] * m_AspectRatio,
+		m_ROIData[3] * m_AspectRatio - m_ROIData[1] * m_AspectRatio
 	);
 
 	pen.setColor(Qt::green);
 	painter.drawRect(
-		m_TemplateData[0],
-		m_TemplateData[1],
-		m_TemplateData[2] - m_TemplateData[0],
-		m_TemplateData[3] - m_TemplateData[1]
+		m_TemplateData[0] * m_AspectRatio,
+		m_TemplateData[1] * m_AspectRatio,
+		m_TemplateData[2] * m_AspectRatio - m_TemplateData[0] * m_AspectRatio,
+		m_TemplateData[3] * m_AspectRatio - m_TemplateData[1] * m_AspectRatio
 	);
 
 	std::string roi = std::to_string(m_ROIData[0]);
@@ -609,8 +610,8 @@ void Dialog::mousePressEvent(QMouseEvent* event)
 			data = m_TemplateData;
 			break;
 		}
-		data[0] = event->position().x() - m_LabelLeft->pos().x();
-		data[1] = event->position().y();
+		data[0] = event->position().x() / m_AspectRatio - m_LabelLeft->pos().x() / m_AspectRatio;
+		data[1] = event->position().y() / m_AspectRatio;
 		data[2] = 0;
 		data[3] = 0;
 	}
@@ -631,8 +632,8 @@ void Dialog::mouseMoveEvent(QMouseEvent* event)
 			data = m_TemplateData;
 			break;
 		}
-		data[2] = event->position().x() - m_LabelLeft->pos().x();
-		data[3] = event->position().y();
+		data[2] = event->position().x() / m_AspectRatio - m_LabelLeft->pos().x() / m_AspectRatio;
+		data[3] = event->position().y() / m_AspectRatio;
 	}
 	this->update();
 }
@@ -653,8 +654,8 @@ void Dialog::mouseReleaseEvent(QMouseEvent* event)
 			data = m_TemplateData;
 			break;
 		}
-		data[2] = event->position().x() - m_LabelLeft->pos().x();
-		data[3] = event->position().y();
+		data[2] = event->position().x() / m_AspectRatio - m_LabelLeft->pos().x() / m_AspectRatio;
+		data[3] = event->position().y() / m_AspectRatio;
 		if (data[0] > data[2])
 		{
 			std::swap(data[0], data[2]);
